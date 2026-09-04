@@ -1,5 +1,5 @@
 {
-  "name": "agent-kit",
+  "name": "@guilhermednobre/agent-kit",
   "version": "0.1.0",
   "description": "Scaffolds a Claude-as-orchestrator / Antigravity-worker agent workflow into any repository",
   "type": "module",
@@ -14,6 +14,9 @@
   ],
   "engines": {
     "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "test": "node --test",

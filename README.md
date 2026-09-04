@@ -1,11 +1,13 @@
-# agent-kit
+# @guilhermednobre/agent-kit
 
 Scaffolds a multi-agent development workflow into any repository: **Claude orchestrates,
 Antigravity (`agy`) workers implement**, supervised through Orca orchestration.
 
 ```bash
-npx agent-kit init
+npx @guilhermednobre/agent-kit init
 ```
+
+Installed globally, the command is just `agent-kit`.
 
 ## What it writes
 
@@ -33,7 +35,7 @@ Existing files are never overwritten without `--force` or an explicit confirmati
 ## Usage
 
 ```bash
-npx agent-kit init [directory]
+npx @guilhermednobre/agent-kit init [directory]
 ```
 
 | Option | Effect |

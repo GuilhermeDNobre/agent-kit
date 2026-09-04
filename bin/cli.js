@@ -25,7 +25,7 @@ const HELP = `
 agent-kit — scaffolds a Claude-as-orchestrator / agy-worker agent workflow.
 
 Usage:
-  npx agent-kit init [directory]
+  npx @guilhermednobre/agent-kit init [directory]
 
 Options:
   --name <name>           Project name written into CLAUDE.md and AGENTS.md
