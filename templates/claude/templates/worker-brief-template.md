@@ -20,8 +20,10 @@
 - Documentos a ler antes de começar:
   - `CLAUDE.md`
   - `AGENTS.md`
+  - `docs/agents/worker.md`
   - `.claude/rules/README.md` e as regras aplicáveis
-  - [`tasks/prd-<feature>/prd.md`, `techspec.md`, `<num>_task.md` ou `bugs.md`, conforme o caso]
+  - [`tasks/prd-<feature>/prd.md`, `.../techspec.md`,
+    `.../itemized-tasks/<num>_task.md` ou `.../bugs.md`, conforme o caso]
 - Estado relevante do projeto: [o que já existe, o que não existe, decisões ainda em aberto]
 
 ## RESTRIÇÕES

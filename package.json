@@ -1,7 +1,7 @@
 {
   "name": "@guilhermednobre/agent-kit",
-  "version": "0.1.0",
-  "description": "Scaffolds a Claude-as-orchestrator / Antigravity-worker agent workflow into any repository",
+  "version": "0.2.0",
+  "description": "Scaffolds a Claude-as-orchestrator / worker-agent workflow into any repository",
   "type": "module",
   "bin": {
     "agent-kit": "bin/cli.js"
@@ -28,7 +28,8 @@
     "agents",
     "orchestration",
     "scaffold",
-    "antigravity"
+    "agents-md",
+    "opencode"
   ],
   "license": "MIT",
   "author": "Guilherme Damasceno"

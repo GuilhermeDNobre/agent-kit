@@ -3,7 +3,7 @@ description: Revisa o trabalho do worker, aprova e fecha ou abre o loop de bugfi
 ---
 
 > **Executado por:** Claude (orquestrador), na worktree atual.
-> **Não delegue este comando a um worker `agy`** — o review final nunca é delegado.
+> **Não delegue este comando a um worker** — o review final nunca é delegado.
 > Ver `CLAUDE.md` seção 1 (divisão de responsabilidades).
 
 ---
@@ -169,7 +169,7 @@ Gerar relatório final no formato:
 ## Problemas Encontrados
 | Severidade | Arquivo | Linha | Descrição | Sugestão |
 |------------|---------|-------|-----------|----------|
-| Alta/Média/Baixa | [file] | [line] | [desc] | [fix] |
+| Blocker/High/Medium/Low | [file] | [line] | [desc] | [fix] |
 
 ## Pontos Positivos
 - [pontos positivos identificados]
@@ -194,13 +194,27 @@ Gerar relatório final no formato:
 - [ ] Code smells verificados
 - [ ] Relatório final gerado
 
+## Severidade
+
+| Nível | Quando | Efeito |
+|---|---|---|
+| **Blocker** | Teste falhando, segurança, perda de dados, quebra de invariante de ADR, critério de aceite não atendido | Reprova |
+| **High** | Violação de rule ou da TechSpec, bug de comportamento sem teste, contrato divergente | Reprova |
+| **Medium** | Code smell real, teste fraco (não falharia com a lógica errada), nome ou estrutura confusa | Ressalva: vai para o `bugs.md` como item não bloqueante |
+| **Low** | Polimento | Ressalva: só no relatório |
+
+Classifique cada problema antes de decidir. Na dúvida entre dois níveis, escolha o mais alto e diga por quê.
+
 ## Critérios de Aprovação
 
-**APROVADO**: Todos os critérios atendidos, testes passando, código conforme rules e TechSpec.
+**APROVADO**: Nenhum achado Blocker, High ou Medium.
 
-**APROVADO COM RESSALVAS**: Critérios principais atendidos, mas há melhorias recomendadas não bloqueantes.
+**APROVADO COM RESSALVAS**: Nenhum Blocker ou High; há Medium ou Low registrados.
 
-**REPROVADO**: Testes falhando, violação grave de rules, não aderência à TechSpec, ou problemas de segurança.
+**REPROVADO**: Pelo menos um Blocker ou High.
+
+O loop de bugfix corrige Blocker e High. Se depois de **3 rodadas** de bugfix ainda houver Blocker ou High,
+pare e leve o caso ao usuário com o diagnóstico (a regra dos dois workers por bug, abaixo, continua valendo).
 
 ## Ação Após o Review (Obrigatório)
 
@@ -220,7 +234,7 @@ O review não termina no relatório. Ele decide o destino do worker.
    `.claude/templates/bugs-template.md`, incluindo causa raiz, solução pretendida e o teste de
    regressão exigido
 3. Fechar o worker reprovado
-4. Despachar um **novo** worker `agy` com um brief de `/executar-bugfix` apontando para o `bugs.md`
+4. Despachar um **novo** worker com um brief de `/executar-bugfix` apontando para o `bugs.md`
    (ver `CLAUDE.md` seções 2 e 5)
 5. Repetir o review quando ele reportar `worker_done`
 

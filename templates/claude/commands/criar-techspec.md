@@ -3,7 +3,7 @@ description: Cria a Tech Spec a partir do PRD, com análise profunda do projeto.
 ---
 
 > **Executado por:** Claude (orquestrador), na worktree atual.
-> **Não delegue este comando a um worker `agy`** — exige o Context7 MCP e decisões de arquitetura.
+> **Não delegue este comando a um worker** — exige o Context7 MCP e decisões de arquitetura.
 > Ver `CLAUDE.md` seção 1 (divisão de responsabilidades).
 
 ---

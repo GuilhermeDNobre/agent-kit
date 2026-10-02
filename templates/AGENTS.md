@@ -1,159 +1,149 @@
 # AGENTS.md
 
-Operating contract for the **Antigravity implementation worker** (CLI `agy`) in this repository.
+Shared contract for **every coding agent** in this repository, whatever the tool. It states what
+the project is and how code is written here. It does not assign roles:
 
-You run inside an Orca-managed worktree, launched as `agy --model gemini-3.8-flash-high
---dangerously-skip-permissions`, and you are supervised by a Claude orchestrator. `CLAUDE.md`
-governs the orchestrator; this file governs you. On any conflict, `CLAUDE.md` wins.
+- the **orchestrator** role lives in `CLAUDE.md`, which imports this file;
+- the **worker** role lives in `docs/agents/worker.md`, which every worker brief points to;
+- coding standards live in `.claude/rules/` (see `.claude/rules/README.md`).
 
-Read `CLAUDE.md` and the applicable files in `.claude/rules/` before you start working.
+On conflict: role file (`CLAUDE.md` or `docs/agents/worker.md`) > this file > `.claude/rules/`.
 
 ## Project
 
 **{{PROJECT_NAME}}** — {{PROJECT_DESCRIPTION}}
 
----
-
-## 1. What you own
-
-- Feature implementation
-- Routine refactoring
-- Tests
-- Documentation
-- Boilerplate
-- Straightforward debugging
-- Repetitive code changes
-- Applying fixes already diagnosed in `tasks/prd-<feature>/bugs.md`
-
-## 2. What you do not own
-
-- Architecture and technical decisions
-- Stack selection (see section 4)
-- Security-sensitive decisions
-- Difficult debugging and root-cause analysis
-- Planning and task decomposition
-- Final review
-- Commits, pushes, branch operations, and merges
-
-If a task pushes you into any of these, stop and escalate. Do not decide it yourself.
-
----
-
-## 3. Orca orchestration protocol
-
-You receive work as a dispatched task carrying an injected `task_id` and `dispatch_id`. Never
-invent, guess, or reuse stale IDs. You are a worker: you do not dispatch sub-workers.
-
-Report completion **exactly once**:
-
-```bash
-orca orchestration send --type worker_done \
-  --subject "<short status>" \
-  --body "<what you did, what you found, what remains>" \
-  --task-id <task_id> --dispatch-id <dispatch_id> \
-  --outcome succeeded --files-modified "path/a,path/b" --json
-```
-
-- Encode failure with `--outcome failed`. Never signal failure in prose alone, and never exit
-  silently.
-- Blocking question to the coordinator:
-  `orca orchestration ask --question "<q>" --options "<a,b>" --timeout-ms 600000`.
-  Never use an interactive local prompt — the coordinator cannot see or answer it.
-- Blocked before completion: `--type escalation`.
-- Long runs: `--type heartbeat` every 5 minutes, or `--type status` for progress.
-- Read coordinator messages with `orca orchestration check --terminal <your handle>`.
-
-After `worker_done`, your turn is over. Stop, return to an idle prompt, and start nothing new.
-Do not exit the shell — the coordinator reviews your work and then closes this terminal itself.
-
----
-
-## 4. Stack constraints
-
 <!--IF:greenfield-->
-The stack is **not chosen**. This repository has no source code, no package manager, no dependency
-manifest, no build system, no test suite, and no CI.
+## Stack: not chosen yet
 
-Hard rules:
+The repository is still a greenfield scaffold. Language, framework, package manager, directory
+layout, and test tooling are **open decisions that belong to the user**. No agent picks them
+unilaterally. If a task cannot proceed without one of them, ask.
 
-- Do not pick the language, framework, package manager, directory layout, or test tooling.
-- Do not scaffold a project structure on your own initiative.
-- Do not run or claim to have run a command that does not exist yet.
+`.claude/rules/` is split accordingly — see `.claude/rules/README.md`:
 
-If a task cannot proceed without one of those decisions, send an `ask` or an `escalation`. Never
-assume a default.
+- **Always apply:** `code-standards.md`, `logging.md`, `tests.md` (principles, tool-agnostic).
+- **Apply only if that technology is chosen:** `node.md`, `react.md`, `http.md`.
+
+Because no dependency manifest exists, there is **no runnable build, lint or test command yet**.
+Never report a validation as passing when its command does not exist.
 <!--END-->
 <!--IF:existing-->
-This project already has a stack. The commands table in `CLAUDE.md` is the single source of truth
-for how to build, test and lint it.
+## Stack
 
-Hard rules:
+Detected manifest: `{{STACK_MANIFEST}}`.
 
-- Use only the commands listed in `CLAUDE.md`. If the one you need is missing there, ask — do not
-  guess an invocation.
-- Do not add, replace or upgrade a language, framework, package manager or test tool. That is a
-  user decision, even when it looks like the obvious fix.
-- Do not introduce a new dependency unless the brief names it.
-- Do not run or claim to have run a command that does not exist or that you did not execute.
+`.claude/rules/` is split into two tiers — see `.claude/rules/README.md`:
 
-If a task cannot proceed without one of those decisions, send an `ask` or an `escalation`. Never
-assume a default.
+- **Always apply:** `code-standards.md`, `logging.md`, `tests.md` (principles, tool-agnostic).
+- **Apply only if that technology is part of this project:** `node.md`, `react.md`, `http.md`.
+
+The code examples in the rules are illustrative and do not authorize adding a technology the
+project does not have. Adding or replacing a language, framework, package manager or test tool is a
+**user decision**.
+
+### Commands
+
+The single source of truth for how to build, test and lint. Agents run exactly what is listed here;
+if the one you need is missing, ask instead of guessing. Never report a validation as passing when
+its command does not exist or was not executed.
+
+| Purpose | Command |
+|---|---|
+| Install | `{{CMD_INSTALL}}` |
+| Build | `{{CMD_BUILD}}` |
+| Test | `{{CMD_TEST}}` |
+| Lint | `{{CMD_LINT}}` |
+| Single test | `{{CMD_TEST_ONE}}` |
 <!--END-->
 
-`.claude/rules/README.md` says which rule files always apply and which only apply when the matching
-technology is part of the project. The code examples in the rules are illustrative, not a stack
-mandate.
+Design decisions and their rejected alternatives belong in `docs/adr/`, and the domain glossary in
+`CONTEXT.md`, once they exist. Read both before planning or implementing: they explain why the
+code looks the way it does.
+
+## Environment pitfalls
+
+Facts about this machine and toolchain that cost a debugging session once. Keep them short; the
+`/fechar-ciclo` command adds to this list.
+
+- (none yet)
 
 ---
 
-## 5. Development workflow
+## Engineering rules
 
-1. Read `CLAUDE.md`, this file, and the applicable `.claude/rules/` files.
-2. Read the brief in full: objective, context, constraints, files involved, acceptance criteria,
-   validation.
-3. Work **only** inside the files the brief names. Touch nothing else.
-4. Prefer small, reviewable diffs. Match the existing style.
-5. Run the validation the brief specifies and observe the real output.
-6. Report honestly — including what you did not do and why.
+These bias toward caution over speed. For trivial tasks, use judgment.
 
-Never commit, push, stage, or switch branches. The coordinator reviews the working tree as-is.
+### Think before acting
+
+Do not assume, do not hide confusion, surface tradeoffs. State assumptions explicitly; if multiple
+interpretations exist, present them instead of silently picking one. If something is unclear, ask.
+
+### Simplicity first
+
+Minimum code that solves the problem, nothing speculative. No features beyond what was asked, no
+abstractions for single-use code, no unrequested configurability, no error handling for impossible
+scenarios. Simplicity governs **how** each item is implemented, never **whether** it is
+implemented. Cutting scope is not simplification.
+
+### Surgical changes
+
+Touch only what the task requires. Do not improve adjacent code, comments, or formatting. Do not
+refactor what is not broken. Match existing style. Mention unrelated dead code instead of deleting
+it. Remove only the imports and symbols your own change orphaned.
+
+### Goal-driven execution
+
+Turn every task into a verifiable goal before starting: "add validation" becomes "write tests for
+invalid inputs, then make them pass". Weak success criteria ("make it work") guarantee rework.
+
+### The spec is the request
+
+A PRD, TechSpec, or task file is a contract. Every item gets implemented. Never silently drop,
+defer, merge, or "phase" items; if one looks unnecessary, ask before skipping. Before declaring a
+multi-item task done, enumerate every item and its status:
+
+```
+- [Item 1] -> done
+- [Item 2] -> partial - what is missing and why
+- [Item 3] -> skipped - reason, surfaced earlier
+```
+
+### Honesty about validation
+
+Never fabricate command output, test results, file paths, or dependencies. A validation counts only
+when its output was observed in this session. Missing output means it did not run.
+
+### Language
+
+- **English:** source code, identifiers, comments, commit messages, PR descriptions, `AGENTS.md`,
+  `CLAUDE.md`, `docs/agents/`.
+- **Portuguese:** `.claude/commands/`, `.claude/templates/`, `.claude/rules/`, and every generated
+  process document (`prd.md`, `techspec.md`, `tasks.md`, `*_task.md`, `bugs.md`).
+- Conversation with the user follows the user's language.
+
+### Comments
+
+Prefer self-explanatory code. No restating what the code does, no TODOs, no section headers, no
+"added for X" notes. Comment only when the *why* is non-obvious.
+
+### Commits
+
+- [Conventional Commits](https://www.conventionalcommits.org/): `type(scope): subject`, imperative,
+  lowercase, no trailing period.
+- **Never add `Co-Authored-By:` trailers or any assistant attribution.**
+- Only the orchestrator commits, and only when the user asks.
+
+### Code quality
+
+Keep functions small and well under the complexity ceiling, modules focused, dependencies pointing
+toward stable abstractions with no cycles. Tests cover the branches that can break, and their
+assertions would fail if the logic were subtly wrong (`>` to `>=`, a flipped sign, a deleted line).
 
 ---
 
-## 6. Engineering rules
+## Maintaining this file
 
-The full set is in `CLAUDE.md` section 6 and `.claude/rules/`. The ones that most often go wrong:
-
-- **Simplicity first** — minimum code that solves the problem. No speculative features,
-  abstractions for single-use code, or unrequested configurability. Simplicity governs *how* you
-  implement each item, never *whether* you implement it.
-- **Surgical changes** — do not improve adjacent code, comments, or formatting. Do not refactor
-  what is not broken. Remove only the symbols your own change orphaned; mention other dead code
-  instead of deleting it.
-- **The spec is the request** — implement every item in the brief. Never silently drop, defer, or
-  merge items. Ambiguity is a question, not a licence to omit.
-- **Language** — code, identifiers, and comments in English; process documents
-  (`prd.md`, `techspec.md`, `tasks.md`, `bugs.md`) in Portuguese.
-- **Comments** — prefer self-explanatory code. Comment only when the *why* is non-obvious.
-
----
-
-## 7. Definition of done
-
-A task is done only when all of the following hold:
-
-- Every acceptance criterion in the brief is met.
-- Every item in the brief is implemented, or explicitly reported as partial or skipped with a
-  reason.
-- The specified validation was actually executed and its output observed.
-- No unrequested scope was added and no unrelated file was touched.
-- Nothing is fabricated: no invented command output, test result, file path, or dependency.
-
-Then, and only then, send `worker_done`.
-
----
-
-## 8. Maintenance
-
-Update this file whenever the stack lands or the worker protocol changes, in the same pass as
-`CLAUDE.md` and `.claude/rules/README.md`.
+Generated by `agent-kit` as a starting point. Keep it true to what the project is: exact commands,
+non-obvious relationships between modules, conventions a newcomer could not infer from one file.
+Keep it under ~200 lines; move topic-specific rules into `.claude/rules/`.

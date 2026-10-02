@@ -1,12 +1,12 @@
 ---
-description: Implementa uma tarefa do tasks.md e reporta worker_done. Rodado por um worker agy despachado via Orca.
+description: Implementa uma tarefa do tasks.md e reporta worker_done. Rodado por um worker despachado via Orca.
 ---
 
-> **Executado por:** worker `agy`, despachado pelo Claude via Orca (ver `CLAUDE.md` seção 2).
+> **Executado por:** worker, despachado pelo Claude via Orca (ver `CLAUDE.md` seção 2).
 > Você recebe este comando dentro de um brief com `task_id` e `dispatch_id` injetados.
 >
 > Regras que valem do início ao fim:
-> - Leia `AGENTS.md` e `.claude/rules/README.md` antes de começar.
+> - Leia `AGENTS.md`, `docs/agents/worker.md` e `.claude/rules/README.md` antes de começar.
 > - Toque **somente** nos arquivos que o brief nomear.
 > - **Nunca** commite, faça stage, push ou troque de branch.
 > - **Nunca** escolha stack, framework, gerenciador de pacotes ou ferramenta de testes.

@@ -1,7 +1,7 @@
 # Bugs - [Nome da Funcionalidade]
 
 > Preenchido pelo **Claude (orquestrador)** durante o review ou o QA, nunca pelo worker.
-> A causa raiz e a solução pretendida já vêm diagnosticadas: o worker `agy` aplica a correção,
+> A causa raiz e a solução pretendida já vêm diagnosticadas: o worker aplica a correção,
 > não a investiga. Ver `CLAUDE.md` seção 5.
 
 ## Resumo
@@ -18,7 +18,7 @@
 
 ## BUG-01: [Título curto e específico]
 
-- **Severidade:** Alta / Média / Baixa
+- **Severidade:** Blocker / High / Medium / Low (escala do `/executar-review`; só Blocker e High bloqueiam a entrega)
 - **Status:** Aberto
 - **Componente afetado:** [módulo, arquivo ou camada]
 - **Arquivos a modificar:** [lista explícita — o worker só pode tocar nestes]

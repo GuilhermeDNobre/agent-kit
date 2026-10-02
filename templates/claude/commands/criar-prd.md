@@ -3,7 +3,7 @@ description: Cria o PRD de uma funcionalidade a partir de perguntas de clarifica
 ---
 
 > **Executado por:** Claude (orquestrador), na worktree atual.
-> **Não delegue este comando a um worker `agy`** — exige perguntas de clarificação com o usuário.
+> **Não delegue este comando a um worker** — exige perguntas de clarificação com o usuário.
 > Ver `CLAUDE.md` seção 1 (divisão de responsabilidades).
 
 ---

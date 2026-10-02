@@ -8,7 +8,7 @@
 
 ## Plano de Execução
 
-A coluna **Paralelizável** decide quantas worktrees e workers `agy` serão abertos.
+A coluna **Paralelizável** decide quantas worktrees e workers serão abertos.
 Marque `sim` somente quando a tarefa não depende de nada pendente **e** não compartilha nenhum
 arquivo com outra tarefa paralelizável. Na dúvida, `não`. Ver `CLAUDE.md` seção 3.
 

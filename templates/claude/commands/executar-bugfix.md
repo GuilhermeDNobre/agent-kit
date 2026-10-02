@@ -1,12 +1,12 @@
 ---
-description: Aplica as correções já diagnosticadas no bugs.md e cria os testes de regressão. Rodado por um worker agy.
+description: Aplica as correções já diagnosticadas no bugs.md e cria os testes de regressão. Rodado por um worker.
 ---
 
-> **Executado por:** worker `agy`, despachado pelo Claude via Orca (ver `CLAUDE.md` seção 2).
+> **Executado por:** worker, despachado pelo Claude via Orca (ver `CLAUDE.md` seção 2).
 > Você recebe este comando dentro de um brief com `task_id` e `dispatch_id` injetados.
 >
 > Regras que valem do início ao fim:
-> - Leia `AGENTS.md` e `.claude/rules/README.md` antes de começar.
+> - Leia `AGENTS.md`, `docs/agents/worker.md` e `.claude/rules/README.md` antes de começar.
 > - Toque **somente** nos arquivos que o brief nomear.
 > - **Nunca** commite, faça stage, push ou troque de branch.
 > - **Nunca** escolha stack, framework, gerenciador de pacotes ou ferramenta de testes.
@@ -97,7 +97,7 @@ Tipos de testes a considerar:
 
 ### 5. Bugs visuais e de frontend
 
-Você **não tem MCP configurado** (`agy mcp list` retorna vazio), portanto não executa Playwright,
+Você **não tem MCP configurado**, portanto não executa Playwright,
 não navega no browser e não captura screenshots.
 
 Para bugs visuais: aplique a correção no código conforme a solução pretendida, cubra o

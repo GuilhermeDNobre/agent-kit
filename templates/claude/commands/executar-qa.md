@@ -3,7 +3,7 @@ description: Valida a implementação com testes E2E e acessibilidade via Playwr
 ---
 
 > **Executado por:** Claude (orquestrador), na worktree atual.
-> **Não delegue este comando a um worker `agy`** — exige o Playwright MCP, que não está configurado no `agy`.
+> **Não delegue este comando a um worker** — exige o Playwright MCP, que não está configurado no worker.
 > Ver `CLAUDE.md` seção 1 (divisão de responsabilidades).
 
 ---
@@ -126,7 +126,7 @@ Gerar relatório final no formato:
 ## Bugs Encontrados
 | ID | Descrição | Severidade | Screenshot |
 |----|-----------|------------|------------|
-| BUG-01 | [descrição] | Alta/Média/Baixa | [link] |
+| BUG-01 | [descrição] | Blocker/High/Medium/Low | [link] |
 
 ## Conclusão
 [Parecer final do QA]
@@ -157,7 +157,8 @@ Gerar relatório final no formato:
 
 ### APROVADO
 
-Registrar o relatório e seguir para a integração. Nenhum worker é despachado.
+Registrar o relatório e seguir para a integração. Nenhum worker é despachado. Em seguida, rodar
+`/fechar-ciclo` para transformar as lições do ciclo em regras e gerar o changelog.
 
 ### REPROVADO
 
@@ -166,7 +167,7 @@ Registrar o relatório e seguir para a integração. Nenhum worker é despachado
 2. Escrever `tasks/prd-[nome-funcionalidade]/bugs.md` seguindo
    `.claude/templates/bugs-template.md`, com causa raiz, solução pretendida, teste de regressão
    exigido e o caminho do screenshot de evidência
-3. Despachar um worker `agy` com um brief de `/executar-bugfix` apontando para esse `bugs.md`
+3. Despachar um worker com um brief de `/executar-bugfix` apontando para esse `bugs.md`
    (ver `CLAUDE.md` seções 2 e 5)
 4. Revisar o resultado com `/executar-review` e só então fechar o worker
 5. Repetir o QA para confirmar que os bugs sumiram e nada regrediu
@@ -176,4 +177,4 @@ worktrees separadas (`CLAUDE.md` seção 3).
 
 <critical>O QA só está APROVADO quando TODOS os requisitos do PRD forem verificados e estiverem funcionando</critical>
 <critical>Utilize o Playwright MCP para TODAS as interações com a aplicação</critical>
-<critical>O worker `agy` não tem MCP: ele não consegue reproduzir bugs visuais. Descreva o bug de forma que a correção seja aplicável sem abrir o browser</critical>
+<critical>O worker não tem MCP: ele não consegue reproduzir bugs visuais. Descreva o bug de forma que a correção seja aplicável sem abrir o browser</critical>

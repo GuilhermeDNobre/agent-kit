@@ -3,7 +3,7 @@ description: Decompõe PRD e Tech Spec em tarefas incrementais, marcando as para
 ---
 
 > **Executado por:** Claude (orquestrador), na worktree atual.
-> **Não delegue este comando a um worker `agy`** — decomposição de tarefas e planejamento de paralelismo.
+> **Não delegue este comando a um worker** — decomposição de tarefas e planejamento de paralelismo.
 > Ver `CLAUDE.md` seção 1 (divisão de responsabilidades).
 
 ---
@@ -59,7 +59,13 @@ A funcionalidade em que você trabalhará é identificada por este slug:
 - Template para a lista de tarefas: `./.claude/templates/tasks-template.md`
 - Lista de tarefas: `./tasks/prd-[nome-funcionalidade]/tasks.md`
 - Template para cada tarefa individual: `./.claude/templates/task-template.md`
-- Tarefas individuais: `./tasks/prd-[nome-funcionalidade]/[num]_task.md`
+- **Crie sempre a pasta** `./tasks/prd-[nome-funcionalidade]/itemized-tasks/`
+- Tarefas individuais: `./tasks/prd-[nome-funcionalidade]/itemized-tasks/[num]_task.md`
+
+<critical>Os arquivos `[num]_task.md` vão SEMPRE dentro de `itemized-tasks/`, nunca soltos na pasta da funcionalidade. O `prd.md`, o `techspec.md` e o `tasks.md` ficam um nível acima, na raiz da funcionalidade.</critical>
+
+Como os briefs passam a viver um nível abaixo, todo caminho relativo escrito dentro deles aponta
+para `../` ao referenciar `prd.md`, `techspec.md` ou `tasks.md`.
 
 ### Formato do Resumo de Tarefas (tasks.md)
 
@@ -71,7 +77,7 @@ A funcionalidade em que você trabalhará é identificada por este slug:
 
 ## Diretrizes Finais
 
-- Assuma que o leitor principal é um worker `agy` sem contexto prévio do projeto (seja explícito)
+- Assuma que o leitor principal é um worker sem contexto prévio do projeto (seja explícito)
 - **Evite criar mais de 10 tarefas** (agrupe conforme definido anteriormente)
 - Use o formato X.0 para tarefas principais, X.Y para subtarefas
 

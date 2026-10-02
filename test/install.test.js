@@ -55,11 +55,11 @@ test("leaves no unresolved placeholder in any generated file", async () => {
   const agentsMd = await readFile(join(dir, "AGENTS.md"), "utf8");
   assert.deepEqual(findUnresolved(claudeMd), []);
   assert.deepEqual(findUnresolved(agentsMd), []);
-  assert.match(claudeMd, /\*\*demo\*\* — a demo project/);
+  assert.match(agentsMd, /\*\*demo\*\* — a demo project/);
 });
 
 test("greenfield and existing modes produce different stack sections", async () => {
-  const template = await readFile(join(TEMPLATES_DIR, "CLAUDE.md"), "utf8");
+  const template = await readFile(join(TEMPLATES_DIR, "AGENTS.md"), "utf8");
   const greenfield = render(template, "greenfield", VARS);
   const existing = render(template, "existing", VARS);
   assert.match(greenfield, /Stack: not chosen yet/);
@@ -79,9 +79,9 @@ test("skips a file that already exists when the resolver says skip", async () =>
 
 test("overwrites only when the resolver says overwrite", async () => {
   const dir = await freshDir("agent-kit-force-");
-  await writeFile(join(dir, "CLAUDE.md"), "MINE", "utf8");
+  await writeFile(join(dir, "AGENTS.md"), "MINE", "utf8");
   await installInto(dir, "greenfield", async () => "overwrite");
-  const written = await readFile(join(dir, "CLAUDE.md"), "utf8");
+  const written = await readFile(join(dir, "AGENTS.md"), "utf8");
   assert.notEqual(written, "MINE");
   assert.match(written, /\*\*demo\*\*/);
 });
@@ -114,4 +114,32 @@ test("creates nested directories that do not exist yet", async () => {
   await mkdir(join(dir, "unrelated"));
   await installInto(dir, "greenfield");
   assert.ok(existsSync(join(dir, ".claude", "commands", "executar-task.md")));
+});
+
+test("CLAUDE.md imports AGENTS.md and starts with the worker setup notice", async () => {
+  const dir = await freshDir("agent-kit-claude-");
+  await installInto(dir, "greenfield");
+  const claudeMd = await readFile(join(dir, "CLAUDE.md"), "utf8");
+  assert.match(claudeMd, /^@AGENTS\.md\r?\n/);
+  assert.match(claudeMd, /<!--WORKER-SETUP-->[\s\S]*\/configurar-worker[\s\S]*<!--\/WORKER-SETUP-->/);
+  assert.match(claudeMd, /<!--WORKER-RECIPE-->\r?\n\*\*Not configured\.\*\*/);
+});
+
+test("writes the worker protocol and the new pipeline commands", async () => {
+  const dir = await freshDir("agent-kit-pipeline-");
+  await installInto(dir, "greenfield");
+  assert.ok(existsSync(join(dir, "docs", "agents", "worker.md")));
+  for (const command of ["configurar-worker", "avaliar-ideia", "analisar-consistencia", "fechar-ciclo"]) {
+    assert.ok(existsSync(join(dir, ".claude", "commands", `${command}.md`)), command);
+  }
+});
+
+test("no template outside configurar-worker hard-codes a worker tool or model", async () => {
+  const files = await planFiles(TEMPLATES_DIR);
+  const toolNames = /\b(agy|opencode|antigravity|gemini|muse-spark)\b/i;
+  for (const file of files) {
+    if (file.target.endsWith("configurar-worker.md")) continue;
+    const text = await readFile(file.source, "utf8");
+    assert.doesNotMatch(text, toolNames, file.target);
+  }
 });

@@ -52,7 +52,11 @@ Detalhes de implementação serão abordados na Especificação Técnica.]
 
 ## Fora de Escopo
 
-[Declare claramente o que esta funcionalidade NÃO incluirá para gerenciar o escopo:
+[Declare claramente o que esta funcionalidade NÃO incluirá para gerenciar o escopo.
+
+**Abra a seção dizendo se o que está listado é adiado ou cortado do produto**, e separe os dois
+casos. Sem essa frase, um leitor que caia direto aqui — worker inclusive — entende "o produto não
+faz isso", e passa a implementar contra uma restrição que nunca existiu.
 
 - Funcionalidades explicitamente excluídas
 - Considerações futuras que estão fora de escopo

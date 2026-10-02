@@ -22,13 +22,13 @@ const OPTIONS = {
 };
 
 const HELP = `
-agent-kit — scaffolds a Claude-as-orchestrator / agy-worker agent workflow.
+agent-kit — scaffolds a Claude-as-orchestrator / worker-agent workflow.
 
 Usage:
   npx @guilhermednobre/agent-kit init [directory]
 
 Options:
-  --name <name>           Project name written into CLAUDE.md and AGENTS.md
+  --name <name>           Project name written into AGENTS.md
   --description <text>    One-line project description
   --mode <mode>           greenfield | existing   (default: auto-detected)
   --force                 Overwrite existing files without asking
@@ -37,8 +37,9 @@ Options:
   -h, --help              Show this help
   -v, --version           Show version
 
-Writes CLAUDE.md, AGENTS.md and .claude/{commands,rules,templates} into the
-target directory. Existing files are never overwritten without --force or a
+Writes AGENTS.md, CLAUDE.md, docs/agents/worker.md and
+.claude/{commands,rules,templates} into the target directory. The worker
+tool and model are chosen in the first Claude session (/configurar-worker). Existing files are never overwritten without --force or a
 confirmation.
 `;
 
@@ -180,13 +181,14 @@ function summarize(counts) {
 function printNextSteps(mode) {
   console.log("");
   console.log("Next steps:");
-  console.log("  1. Read CLAUDE.md and fill in anything marked TBD.");
+  console.log("  1. Open Claude Code here and run /configurar-worker to choose the worker agent and model.");
+  console.log("  2. Read AGENTS.md and fill in anything marked TBD.");
   if (mode === "existing") {
-    console.log("  2. Verify the commands table in CLAUDE.md actually runs.");
+    console.log("  3. Verify the commands table in AGENTS.md actually runs.");
   } else {
-    console.log("  2. Decide the stack with your team, then update CLAUDE.md and rules/README.md.");
+    console.log("  3. Decide the stack, then update AGENTS.md and .claude/rules/README.md.");
   }
-  console.log("  3. Drop the rule files under .claude/rules that do not match your project.");
+  console.log("  4. Drop the rule files under .claude/rules that do not match your project.");
 }
 
 main().catch((error) => {

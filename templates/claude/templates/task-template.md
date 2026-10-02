@@ -1,13 +1,13 @@
 # Tarefa X.0: [Título da Tarefa]
 
-<critical>Ler os arquivos de prd.md e techspec.md desta pasta, se você não ler esses arquivos sua tarefa será invalidada</critical>
-<critical>Ler também `AGENTS.md` e `.claude/rules/README.md` antes de começar</critical>
+<critical>Ler os arquivos `../prd.md` e `../techspec.md` (um nível acima desta pasta), se você não ler esses arquivos sua tarefa será invalidada</critical>
+<critical>Ler também `AGENTS.md`, `docs/agents/worker.md` e `.claude/rules/README.md` antes de começar</critical>
 
 ## Execução
 
 | Campo | Valor |
 |---|---|
-| Executada por | worker `agy` |
+| Executada por | worker |
 | Depende de | [tarefas anteriores, ou `nenhuma`] |
 | Paralelizável | sim / não |
 | Worktree | [nome da worktree, ou `atual`] |
@@ -45,10 +45,10 @@
 ## Arquivos relevantes
 
 [Lista explícita dos arquivos desta tarefa. O worker não pode tocar em nenhum outro, com a única
-exceção de marcar a tarefa como concluída no `tasks.md`.]
+exceção de marcar a tarefa como concluída no `../tasks.md`.]
 
 ## Reporte
 
 Ao terminar, envie `worker_done` uma única vez com `--outcome succeeded` ou `--outcome failed`,
 citando a saída de validação realmente observada e o que ficou de fora. Depois pare: não commite,
-não feche o terminal e não inicie trabalho novo. Ver `AGENTS.md` seção 3.
+não feche o terminal e não inicie trabalho novo. Ver `docs/agents/worker.md`.

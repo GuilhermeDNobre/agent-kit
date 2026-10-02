@@ -1,8 +1,8 @@
 # Regras do Projeto
 
-Padrões de engenharia compartilhados entre o Claude (orquestrador) e os workers `agy`.
+Padrões de engenharia compartilhados entre o Claude (orquestrador) e os workers, qualquer que seja a ferramenta deles.
 
-Precedência: `CLAUDE.md` > `AGENTS.md` > estas regras.
+Precedência: arquivo do papel (`CLAUDE.md` ou `docs/agents/worker.md`) > `AGENTS.md` > estas regras.
 
 <!--IF:greenfield-->
 ## A stack ainda não foi escolhida
