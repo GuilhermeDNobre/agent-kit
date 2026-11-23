@@ -1,7 +1,7 @@
 {
   "name": "@guilhermednobre/agent-kit",
-  "version": "0.2.0",
-  "description": "Scaffolds a Claude-as-orchestrator / worker-agent workflow into any repository",
+  "version": "0.3.0",
+  "description": "Autonomous multi-agent development workflow: Claude coordinates, secondary agents implement and validate, on T3 Code or Orca",
   "type": "module",
   "bin": {
     "agent-kit": "bin/cli.js"
@@ -10,7 +10,8 @@
     "bin",
     "src",
     "templates",
-    "README.md"
+    "README.md",
+    "CHANGELOG.md"
   ],
   "engines": {
     "node": ">=20"
@@ -29,7 +30,13 @@
     "orchestration",
     "scaffold",
     "agents-md",
-    "opencode"
+    "opencode",
+    "t3-code",
+    "antigravity",
+    "gemini",
+    "linear",
+    "workflow",
+    "autonomous-agents"
   ],
   "license": "MIT",
   "author": "Guilherme Damasceno"
