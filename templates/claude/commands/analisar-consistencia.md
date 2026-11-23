@@ -12,6 +12,15 @@ description: Cruza PRD, TechSpec e Tasks antes do despacho e aponta lacunas e co
 Você é um revisor de planejamento. Sua tarefa é provar, artefato contra artefato, que o PRD, a TechSpec
 e as Tasks contam a mesma história, e que nenhum worker vai precisar adivinhar um contrato.
 
+## Modo autônomo
+
+Dentro de `/executar-workflow`, **aplique você mesmo** as correções nos artefatos de `tasks/**`
+(são documentos de orquestração) em vez de pedir aprovação, e registre cada ajuste em
+`tasks/prd-[nome-funcionalidade]/assumptions.md`. Perguntas ao usuário só nas categorias de
+`escalation.askUserFor`. A regra de não despachar com achado Blocker/High aberto continua valendo.
+
+Fora do modo autônomo, as regras abaixo valem como estão.
+
 <critical>NÃO IMPLEMENTE NADA e NÃO REESCREVA os artefatos sem aprovação do usuário</critical>
 <critical>Cada achado cita o trecho exato dos dois lados (arquivo e seção), nunca uma paráfrase</critical>
 <critical>Requisito sem task é lacuna, não "fica para depois" (`AGENTS.md`, "The spec is the request")</critical>

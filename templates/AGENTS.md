@@ -3,9 +3,12 @@
 Shared contract for **every coding agent** in this repository, whatever the tool. It states what
 the project is and how code is written here. It does not assign roles:
 
-- the **orchestrator** role lives in `CLAUDE.md`, which imports this file;
-- the **worker** role lives in `docs/agents/worker.md`, which every worker brief points to;
-- coding standards live in `.claude/rules/` (see `.claude/rules/README.md`).
+- the **coordinator** role lives in `CLAUDE.md`, which imports this file;
+- the **worker** role (implementers and validators) lives in `docs/agents/worker.md`. **If you were
+  launched with a brief, you are a worker: follow that file and your brief, not `CLAUDE.md`;**
+- coding standards live in `.claude/rules/` (see `.claude/rules/README.md`);
+- the role pipeline, autonomy limits and protected actions live in `.agent-kit/` (`workflow.json`,
+  `autonomy.json`), and apply to every agent.
 
 On conflict: role file (`CLAUDE.md` or `docs/agents/worker.md`) > this file > `.claude/rules/`.
 
@@ -26,7 +29,8 @@ unilaterally. If a task cannot proceed without one of them, ask.
 - **Apply only if that technology is chosen:** `node.md`, `react.md`, `http.md`.
 
 Because no dependency manifest exists, there is **no runnable build, lint or test command yet**.
-Never report a validation as passing when its command does not exist.
+Never report a validation as passing when its command does not exist. Once the stack is chosen,
+add its commands here and to the `checks` of `.agent-kit/config.json`.
 <!--END-->
 <!--IF:existing-->
 ## Stack
@@ -54,7 +58,11 @@ its command does not exist or was not executed.
 | Build | `{{CMD_BUILD}}` |
 | Test | `{{CMD_TEST}}` |
 | Lint | `{{CMD_LINT}}` |
+| Typecheck | `{{CMD_TYPECHECK}}` |
 | Single test | `{{CMD_TEST_ONE}}` |
+
+The commands that gate a workflow (lint, typecheck, test, build) are mirrored in the `checks` of
+`.agent-kit/config.json`. Keep both in sync.
 <!--END-->
 
 Design decisions and their rejected alternatives belong in `docs/adr/`, and the domain glossary in
@@ -77,7 +85,9 @@ These bias toward caution over speed. For trivial tasks, use judgment.
 ### Think before acting
 
 Do not assume, do not hide confusion, surface tradeoffs. State assumptions explicitly; if multiple
-interpretations exist, present them instead of silently picking one. If something is unclear, ask.
+interpretations exist, present them instead of silently picking one. If something is unclear: a
+worker reports `blocked`; the coordinator follows the escalation rules in `CLAUDE.md` (decide and
+record a reversible assumption, or ask).
 
 ### Simplicity first
 
@@ -132,7 +142,8 @@ Prefer self-explanatory code. No restating what the code does, no TODOs, no sect
 - [Conventional Commits](https://www.conventionalcommits.org/): `type(scope): subject`, imperative,
   lowercase, no trailing period.
 - **Never add `Co-Authored-By:` trailers or any assistant attribution.**
-- Only the orchestrator commits, and only when the user asks.
+- Only the coordinator commits, and only when the user asks or `permissions.localCommits` in
+  `.agent-kit/autonomy.json` is true. Pushing follows `permissions.push`.
 
 ### Code quality
 

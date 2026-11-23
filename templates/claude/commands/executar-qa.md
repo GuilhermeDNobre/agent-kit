@@ -2,9 +2,10 @@
 description: Valida a implementação com testes E2E e acessibilidade via Playwright MCP. Rodado pelo Claude (orquestrador).
 ---
 
-> **Executado por:** Claude (orquestrador), na worktree atual.
-> **Não delegue este comando a um worker** — exige o Playwright MCP, que não está configurado no worker.
-> Ver `CLAUDE.md` seção 1 (divisão de responsabilidades).
+> **Executado por:** quem tiver browser automatizado (Playwright MCP) — normalmente o coordenador.
+> Só delegue a um validador cujo runtime comprovadamente tenha o Playwright MCP.
+> Dentro de um workflow, é a parte de browser do gate `qa` de tarefas com tag `ui` e da verificação
+> de integração; o veredito termina com o bloco `agent-kit-review`. Ver `CLAUDE.md` seções 1 e 6.
 
 ---
 
@@ -162,19 +163,16 @@ Registrar o relatório e seguir para a integração. Nenhum worker é despachado
 
 ### REPROVADO
 
-1. Para cada bug encontrado, **diagnosticar a causa raiz** e decidir a solução — isso é trabalho do
-   Claude, não do worker
+1. Para cada bug encontrado, **diagnosticar a causa raiz** e decidir a solução — trabalho do
+   coordenador
 2. Escrever `tasks/prd-[nome-funcionalidade]/bugs.md` seguindo
    `.claude/templates/bugs-template.md`, com causa raiz, solução pretendida, teste de regressão
    exigido e o caminho do screenshot de evidência
-3. Despachar um worker com um brief de `/executar-bugfix` apontando para esse `bugs.md`
-   (ver `CLAUDE.md` seções 2 e 5)
-4. Revisar o resultado com `/executar-review` e só então fechar o worker
-5. Repetir o QA para confirmar que os bugs sumiram e nada regrediu
-
-Bugs independentes entre si, que tocam arquivos diferentes, podem ir para workers paralelos em
-worktrees separadas (`CLAUDE.md` seção 3).
+3. Dentro de um workflow: registrar o gate como reprovado (`agent-kit wf review ... --gate qa`), o
+   que devolve a tarefa ao dev com os achados. Para bugs da verificação de integração, criar tarefas
+   de correção com `/replanejar-workflow`
+4. Repetir o QA na nova tentativa para confirmar que os bugs sumiram e nada regrediu
 
 <critical>O QA só está APROVADO quando TODOS os requisitos do PRD forem verificados e estiverem funcionando</critical>
 <critical>Utilize o Playwright MCP para TODAS as interações com a aplicação</critical>
-<critical>O worker não tem MCP: ele não consegue reproduzir bugs visuais. Descreva o bug de forma que a correção seja aplicável sem abrir o browser</critical>
+<critical>Assuma que o worker não tem browser: descreva cada bug de forma que a correção seja aplicável sem abri-lo</critical>

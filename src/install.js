@@ -3,12 +3,18 @@ import { existsSync } from "node:fs";
 import { dirname, join, relative, sep } from "node:path";
 import { render } from "./render.js";
 
-export async function planFiles(templatesDir) {
+const DOTTED = { claude: ".claude", "agent-kit": ".agent-kit" };
+const RUNTIME_GUIDE = /^agent-kit[\\/]runtime[\\/]([a-z0-9-]+)\.md$/;
+
+export async function planFiles(templatesDir, { runtime } = {}) {
   const sources = await listFiles(templatesDir);
-  return sources.map((source) => ({
-    source,
-    target: toTargetPath(relative(templatesDir, source)),
-  }));
+  return sources
+    .map((source) => ({ source, relativePath: relative(templatesDir, source) }))
+    .filter(({ relativePath }) => {
+      const guide = RUNTIME_GUIDE.exec(relativePath);
+      return !guide || !runtime || guide[1] === runtime;
+    })
+    .map(({ source, relativePath }) => ({ source, target: toTargetPath(relativePath) }));
 }
 
 async function listFiles(dir) {
@@ -19,30 +25,32 @@ async function listFiles(dir) {
       return entry.isDirectory() ? listFiles(full) : Promise.resolve([full]);
     })
   );
-  return nested.flat();
+  return nested.flat().sort();
 }
 
 function toTargetPath(relativePath) {
   const segments = relativePath.split(sep);
-  if (segments[0] === "claude") {
-    return [".claude", ...segments.slice(1)].join(sep);
-  }
+  if (DOTTED[segments[0]]) return [DOTTED[segments[0]], ...segments.slice(1)].join(sep);
   return relativePath;
 }
 
 export async function installFiles(options) {
-  const { files, targetDir, mode, vars, resolveConflict, dryRun } = options;
+  const { files, targetDir, mode, vars, flags, resolveConflict, dryRun } = options;
   const results = [];
   for (const file of files) {
-    results.push(await installOne(file, { targetDir, mode, vars, resolveConflict, dryRun }));
+    results.push(await installOne(file, { targetDir, mode, vars, flags, resolveConflict, dryRun }));
   }
   return results;
 }
 
-async function installOne(file, { targetDir, mode, vars, resolveConflict, dryRun }) {
+async function contentOf(file, mode, vars, flags) {
+  if (file.content !== undefined) return file.content;
+  return render(await readFile(file.source, "utf8"), mode, vars, flags);
+}
+
+async function installOne(file, { targetDir, mode, vars, flags, resolveConflict, dryRun }) {
   const absoluteTarget = join(targetDir, file.target);
-  const template = await readFile(file.source, "utf8");
-  const content = render(template, mode, vars);
+  const content = await contentOf(file, mode, vars, flags);
   if (!existsSync(absoluteTarget)) {
     await writeIfWanted(absoluteTarget, content, dryRun);
     return { target: file.target, action: "created" };

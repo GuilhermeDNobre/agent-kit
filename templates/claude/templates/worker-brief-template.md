@@ -1,10 +1,12 @@
 # Brief de Worker
 
-> Escrito pelo **Claude (orquestrador)** e enviado como `--spec` em
-> `orca orchestration task-create`. Ver `CLAUDE.md` seção 2.
+> Dentro de um workflow, o brief é **gerado** por `agent-kit wf dispatch` a partir do `plan.json`
+> e guardado em `.agent-kit/runs/<run>/briefs/` — não escreva à mão. Este template documenta o
+> formato e serve para despachos avulsos fora de um run.
 >
 > Um brief sem critérios de aceite verificáveis não pode ser despachado. "Implemente
-> autenticação" é um brief inválido.
+> autenticação" é um brief inválido. O worker recebe **só** o brief: nada da conversa do
+> coordenador chega até ele.
 
 ---
 
@@ -60,9 +62,9 @@ listá-lo.]
 
 ## REPORTE
 
-Ao terminar, envie `worker_done` exatamente uma vez, com `--outcome succeeded` ou
-`--outcome failed`, listando: o que foi feito, a saída de validação realmente observada, e o que
-ficou de fora e por quê.
+Ao terminar, encerre a resposta final com exatamente um bloco `agent-kit-report` (formato em
+`docs/agents/worker.md` seção 4): `outcome` `succeeded`, `failed` ou `blocked`, arquivos alterados,
+cada comando de validação com o exit code real, bloqueios e o que ficou de fora e por quê.
 
 Itens parciais ou não implementados devem ser declarados explicitamente. Não reporte sucesso com
 itens faltando.

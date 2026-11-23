@@ -12,6 +12,15 @@ description: Ao fim de um PRD, transforma o que o ciclo ensinou em regras, ADRs,
 Você é o responsável pela memória institucional do projeto. O objetivo é que o próximo ciclo erre menos que
 este, não por um modelo melhor, mas porque as lições viraram regra escrita.
 
+## Modo autônomo
+
+Dentro de `/executar-workflow`, não espere aprovação item a item: grave a tabela de lições como
+**proposta** na seção `## Lições do ciclo` do relatório e no relatório final ao usuário. Alterações
+em `.claude/rules/`, ADRs e templates só são aplicadas depois que o usuário aprovar a proposta. O
+changelog pode ser escrito.
+
+Fora do modo autônomo, as regras abaixo valem como estão.
+
 <critical>Toda lição cita a evidência: o BUG-NN, o achado do review ou do QA, a correção do usuário</critical>
 <critical>Não registre o que o código ou o git já registram (estrutura, histórico de fixes)</critical>
 <critical>Nada é gravado sem o usuário aprovar a lista de lições</critical>

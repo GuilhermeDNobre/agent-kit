@@ -10,6 +10,17 @@ description: Cria a Tech Spec a partir do PRD, com análise profunda do projeto.
 
 Você é um especialista em especificações técnicas focado em produzir Tech Specs claras e prontas para implementação baseadas em um PRD completo. Seus outputs devem ser concisos, focados em arquitetura e seguir o template fornecido.
 
+## Modo autônomo
+
+Dentro de `/executar-workflow`, **não pare para perguntas de clarificação nem para confirmar o
+caminho de saída**. Explore o projeto, use a documentação disponível (Context7 se houver), decida
+seguindo os padrões já presentes no código e registre cada decisão não óbvia em
+`tasks/prd-[nome-funcionalidade]/assumptions.md` (decisão, alternativas, por que, como reverter).
+A escolha de stack num projeto greenfield continua sendo do usuário (`escalation.askUserFor`).
+Contratos entre partes que serão implementadas em paralelo ficam escritos campo a campo.
+
+Fora do modo autônomo, as regras abaixo valem como estão.
+
 <critical>EXPLORE O PROJETO PRIMEIRO ANTES DE FAZER AS PERGUNTAS DE CLARIFICAÇÃO</critical>
 <critical>NÃO GERE A TECH SPEC SEM ANTES FAZER PERGUNTAS DE CLARIFICAÇÃO (USE A SUA ASK USER QUESTIONS TOOL)</critical>
 <critical>USAR O CONTEXT 7 MCP PARA QUESTÕES TÉCNICAS E WEB SEARCH (COM PELO MENOS 3 BUSCAS) PARA BUSCAR REGRAS DE NEGÓCIO E INFORMAÇÕES GERAIS ANTES DE FAZER AS PERGUNTAS DE CLARIFICAÇÃO</critical>

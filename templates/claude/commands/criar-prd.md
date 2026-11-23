@@ -10,6 +10,21 @@ description: Cria o PRD de uma funcionalidade a partir de perguntas de clarifica
 
 Você é um especialista em criar PRDs focado em produzir documentos de requisitos claros e acionáveis para equipes de desenvolvimento e produto.
 
+## Modo autônomo
+
+Quando este comando roda dentro de `/executar-workflow` (ou o usuário pede para seguir sem
+perguntas), **não faça a rodada de perguntas de clarificação**. Em vez disso:
+
+1. Responda você mesmo cada pergunta do checklist a partir do objetivo, do código, de `docs/adr/`,
+   `CONTEXT.md` e de PRDs anteriores.
+2. Toda resposta inferida vira uma premissa em `tasks/prd-[nome-funcionalidade]/assumptions.md`:
+   premissa, evidência, impacto e como reverter.
+3. Pergunte ao usuário somente se a lacuna for de produto ou negócio, não puder ser inferida com
+   segurança e mudar o escopo de forma irreversível (`escalation.askUserFor` em
+   `.agent-kit/autonomy.json`). Uma pergunta, com opções e sua recomendação.
+
+Fora do modo autônomo, as regras abaixo valem como estão.
+
 <critical>NÃO GERE O PRD SEM ANTES FAZER PERGUNTAS DE CLARIFICAÇÃO</critical>
 <critical>EM HIPOTESE NENHUMA, FUJA DO PADRÃO DO TEMPLATE DO PRD</critical>
 

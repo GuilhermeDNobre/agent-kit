@@ -1,10 +1,25 @@
 ---
-description: Revisa o trabalho do worker, aprova e fecha ou abre o loop de bugfix. Rodado pelo Claude (orquestrador).
+description: Gate de validação (qa, system, uiux, security, acceptance) sobre o trabalho de um worker; aprova ou devolve com achados. Rodado pelo coordenador ou por um validador.
 ---
 
-> **Executado por:** Claude (orquestrador), na worktree atual.
-> **Não delegue este comando a um worker** — o review final nunca é delegado.
-> Ver `CLAUDE.md` seção 1 (divisão de responsabilidades).
+> **Executado por:** o perfil do gate em `.agent-kit/config.json` (`roles.qa`, `roles.system`,
+> `roles.uiux`, `roles.security`, `roles.product-owner`). Quando o perfil é `coordinator`, o
+> coordenador roda o gate; senão, `agent-kit wf gate <run> <task> <gate>` gera o brief do validador.
+> Quem implementou nunca valida o próprio trabalho. Ver `CLAUDE.md` seções 1 e 6.
+
+## Gates
+
+| Gate | Papel | Quando | Foco |
+|---|---|---|---|
+| `qa` | QA | sempre | Testes, casos de borda; fluxos no browser quando houver UI (`/executar-qa`) |
+| `system` | System | sempre | Aderência à TechSpec, arquitetura, contratos e convenções |
+| `uiux` | UI/UX | tag `ui` | Estados, responsividade, acessibilidade WCAG 2.2, consistência visual |
+| `security` | Segurança | tag `security` | Autenticação, autorização, validação de entrada, segredos, PII, LGPD |
+| `acceptance` | Product owner | sempre, depois dos outros | Cada critério de aceite, um por um, com evidência |
+
+Rode as etapas abaixo com o foco do gate em questão. O resultado de cada gate é registrado
+separadamente: `agent-kit wf review <run> <task> --gate <gate> --reviewer <id> --file <resposta>`
+(a resposta termina com o bloco `agent-kit-review`) ou `--verdict approved|rejected --finding "..."`.
 
 ---
 
@@ -46,7 +61,7 @@ Você é um assistente IA especializado em Code Review. Sua tarefa é analisar o
 Executar comandos git para entender o que foi alterado:
 
 O worker pode ter trabalhado em **outra worktree**. Use `-C <caminho-da-worktree>` sempre que o
-review não for na worktree atual — o caminho vem do `worker_done` ou de `orca worktree list --json`.
+review não for na worktree atual — o caminho vem do relatório do worker ou do runtime.
 
 ```bash
 # Arquivos modificados
@@ -213,35 +228,26 @@ Classifique cada problema antes de decidir. Na dúvida entre dois níveis, escol
 
 **REPROVADO**: Pelo menos um Blocker ou High.
 
-O loop de bugfix corrige Blocker e High. Se depois de **3 rodadas** de bugfix ainda houver Blocker ou High,
-pare e leve o caso ao usuário com o diagnóstico (a regra dos dois workers por bug, abaixo, continua valendo).
+O loop de correção trata Blocker e High. Os limites (`maxFixCycles`, `maxAttemptsPerTask`) e o que
+acontece quando se esgotam vêm de `.agent-kit/autonomy.json`.
 
 ## Ação Após o Review (Obrigatório)
 
-O review não termina no relatório. Ele decide o destino do worker.
+O review não termina no relatório: ele vira o veredito do gate.
 
-### APROVADO ou APROVADO COM RESSALVAS
+1. Termine com o bloco `agent-kit-review` (`docs/agents/worker.md` seção 4): `approved` (aprovado ou
+   aprovado com ressalvas — sem Blocker/High) ou `rejected` (pelo menos um Blocker/High), com os
+   achados e, no gate `acceptance`, a lista `criteria` completa.
+2. O coordenador registra com `agent-kit wf review ... --gate <gate>`. Um gate reprovado devolve a
+   tarefa ao dev automaticamente; antes do redespacho o coordenador **diagnostica a causa raiz** e a
+   escreve em `tasks/prd-<feature>/bugs.md` (`.claude/templates/bugs-template.md`).
+3. **Não fazer merge.** Os limites de tentativas e ciclos de correção vêm de
+   `.agent-kit/autonomy.json`; ao esgotá-los, vale `escalation.onBudgetExhausted`.
+4. No runtime Orca, feche o terminal do worker só depois que todos os gates forem registrados
+   (`.agent-kit/runtime/orca.md`).
 
-1. Fechar o worker: `orca terminal close --terminal <handle> --tab --json`
-2. **Não fazer merge.** A branch e a worktree ficam como estão, para o usuário integrar
-3. Atualizar o comentário da worktree:
-   `orca worktree set --worktree <selector> --comment "review aprovado" --json`
-
-### REPROVADO
-
-1. **Diagnosticar a causa raiz** de cada problema — isso é trabalho do Claude, não do worker
-2. Escrever ou complementar `tasks/prd-<feature>/bugs.md` com
-   `.claude/templates/bugs-template.md`, incluindo causa raiz, solução pretendida e o teste de
-   regressão exigido
-3. Fechar o worker reprovado
-4. Despachar um **novo** worker com um brief de `/executar-bugfix` apontando para o `bugs.md`
-   (ver `CLAUDE.md` seções 2 e 5)
-5. Repetir o review quando ele reportar `worker_done`
-
-Se o mesmo problema sobreviver a dois workers, pare de delegar e resolva diretamente.
-
-<critical>NUNCA feche o terminal de um worker antes de concluir o review</critical>
-<critical>NUNCA corrija o código do worker por conta própria em vez de abrir o loop de bugfix, exceto em correções de segurança ou que alterem a arquitetura</critical>
+<critical>Validador não altera arquivos: só lê, roda verificações e reporta</critical>
+<critical>NUNCA corrija o código do worker por conta própria em vez de devolver com achados, exceto em correções de segurança ou que alterem a arquitetura (feitas pelo coordenador)</critical>
 
 ## Notas Importantes
 

@@ -1,15 +1,13 @@
-const CONDITIONAL_BLOCK = /<!--IF:([a-z-]+)-->\r?\n?([\s\S]*?)<!--END-->\r?\n?/g;
+const CONDITIONAL_BLOCK = /<!--IF:([a-z0-9=-]+)-->\r?\n?([\s\S]*?)<!--END-->\r?\n?/g;
 const PLACEHOLDER = /\{\{([A-Z_]+)\}\}/g;
 
-export function render(text, mode, vars) {
-  const selected = selectBlocks(text, mode);
+export function render(text, mode, vars, flags = []) {
+  const selected = selectBlocks(text, new Set([mode, ...flags]));
   return fillPlaceholders(selected, vars);
 }
 
-function selectBlocks(text, mode) {
-  return text.replace(CONDITIONAL_BLOCK, (_, blockMode, body) =>
-    blockMode === mode ? body : ""
-  );
+function selectBlocks(text, active) {
+  return text.replace(CONDITIONAL_BLOCK, (_, condition, body) => (active.has(condition) ? body : ""));
 }
 
 function fillPlaceholders(text, vars) {

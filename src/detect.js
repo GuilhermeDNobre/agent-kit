@@ -52,6 +52,7 @@ function blankCommands() {
     build: UNKNOWN,
     test: UNKNOWN,
     lint: UNKNOWN,
+    typecheck: UNKNOWN,
     testOne: UNKNOWN,
   };
 }
@@ -84,8 +85,13 @@ function nodeCommands(dir, scripts) {
     build: scripts.build ? `${runner} build` : UNKNOWN,
     test: scripts.test ? `${manager.name} test` : UNKNOWN,
     lint: scripts.lint ? `${runner} lint` : UNKNOWN,
+    typecheck: typecheckScript(scripts) ? `${runner} ${typecheckScript(scripts)}` : UNKNOWN,
     testOne: UNKNOWN,
   };
+}
+
+function typecheckScript(scripts) {
+  return ["typecheck", "type-check", "check-types", "tsc"].find((name) => scripts[name]);
 }
 
 function detectPackageManager(dir) {
