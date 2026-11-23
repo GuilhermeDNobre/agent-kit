@@ -1,0 +1,33 @@
+{
+  "feature": "nome-funcionalidade",
+  "objective": "Uma frase com o objetivo da funcionalidade",
+  "tasks": [
+    {
+      "id": "1.0",
+      "title": "Modelo e persistência de usuários",
+      "role": "implementation",
+      "tags": ["security"],
+      "dependsOn": [],
+      "files": ["src/users/**", "test/users/**"],
+      "doc": "tasks/prd-nome-funcionalidade/itemized-tasks/1_task.md",
+      "context": ["tasks/prd-nome-funcionalidade/techspec.md"],
+      "acceptance": [
+        "Senhas são armazenadas apenas como hash",
+        "Os testes de unidade do repositório de usuários passam"
+      ],
+      "validation": ["npm test -- test/users"]
+    },
+    {
+      "id": "2.0",
+      "title": "Tela de login",
+      "role": "implementation",
+      "tags": ["ui", "security"],
+      "dependsOn": ["1.0"],
+      "files": ["src/web/login/**"],
+      "doc": "tasks/prd-nome-funcionalidade/itemized-tasks/2_task.md",
+      "context": ["tasks/prd-nome-funcionalidade/techspec.md"],
+      "acceptance": ["Login com credenciais válidas redireciona para a página inicial"],
+      "validation": ["npm test -- src/web/login"]
+    }
+  ]
+}

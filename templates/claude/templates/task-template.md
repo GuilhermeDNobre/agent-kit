@@ -44,11 +44,11 @@
 
 ## Arquivos relevantes
 
-[Lista explícita dos arquivos desta tarefa. O worker não pode tocar em nenhum outro, com a única
-exceção de marcar a tarefa como concluída no `../tasks.md`.]
+[Lista explícita dos arquivos desta tarefa — a mesma do campo `files` no `plan.json`. O worker não
+pode tocar em nenhum outro.]
 
 ## Reporte
 
-Ao terminar, envie `worker_done` uma única vez com `--outcome succeeded` ou `--outcome failed`,
-citando a saída de validação realmente observada e o que ficou de fora. Depois pare: não commite,
-não feche o terminal e não inicie trabalho novo. Ver `docs/agents/worker.md`.
+Ao terminar, encerre com o bloco `agent-kit-report` (`docs/agents/worker.md` seção 4), citando a
+saída de validação realmente observada e o que ficou de fora. Depois pare: não commite e não inicie
+trabalho novo.

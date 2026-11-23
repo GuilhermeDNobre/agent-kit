@@ -10,6 +10,14 @@ description: Decompõe PRD e Tech Spec em tarefas incrementais, marcando as para
 
 Você é um assistente especializado em gerenciamento de projetos de desenvolvimento de software. Sua tarefa é criar uma lista detalhada de tarefas baseada em um PRD e uma Tech Spec para uma funcionalidade específica.
 
+## Modo autônomo
+
+Dentro de `/executar-workflow`, **não peça aprovação da lista high-level**: gere os arquivos
+diretamente, incluindo o `plan.json` (seção "Plano executável"), e siga. Registre em
+`tasks/prd-[nome-funcionalidade]/assumptions.md` qualquer decisão de decomposição não óbvia.
+
+Fora do modo autônomo, as regras abaixo valem como estão.
+
 <critical>**ANTES DE GERAR QUALQUER ARQUIVO ME MOSTRE A LISTA DAS TASKS HIGH LEVEL PARA APROVAÇÃO**</critical>
 <critical>NÃO IMPLEMENTE NADA</critical>
 <critical>CADA TAREFA DEVE SER UM ENTREGÁVEL FUNCIONAL E INCREMENTAL</critical>
@@ -80,6 +88,29 @@ para `../` ao referenciar `prd.md`, `techspec.md` ou `tasks.md`.
 - Assuma que o leitor principal é um worker sem contexto prévio do projeto (seja explícito)
 - **Evite criar mais de 10 tarefas** (agrupe conforme definido anteriormente)
 - Use o formato X.0 para tarefas principais, X.Y para subtarefas
+
+## Plano executável — `plan.json` (Obrigatório)
+
+Além do `tasks.md`, gere `./tasks/prd-[nome-funcionalidade]/plan.json` seguindo
+`./.claude/templates/plan-template.json`. É ele que o `agent-kit wf` executa: agenda dependências,
+paralelismo e posse de arquivos, gera os briefs e decide quais gates de validação se aplicam.
+
+| Campo | Regra |
+|---|---|
+| `id` | O mesmo do `tasks.md` (`"1.0"`, `"2.0"`, …) |
+| `title` | Título curto |
+| `role` | `implementation`, `test`, `docs`, `debug`, `design` ou `research` — escolhe o perfil de modelo |
+| `profile` | Opcional: força um perfil (`fast`, `standard`, `advanced`) |
+| `tags` | `ui` quando há interface (ativa o gate UI/UX); `security` quando toca autenticação, autorização, dados pessoais, pagamentos ou segredos (ativa o gate de segurança) |
+| `dependsOn` | Ids das tarefas que precisam estar concluídas antes |
+| `files` | Todos os arquivos/diretórios que a tarefa pode alterar (globs permitidos). É a posse de arquivos usada para evitar conflito entre workers |
+| `doc` | `tasks/prd-[nome-funcionalidade]/itemized-tasks/[num]_task.md` |
+| `context` | Arquivos que o worker precisa ler e que serão embutidos no brief (ex.: `techspec.md`, um contrato). Só o necessário |
+| `acceptance` | Critérios verificáveis, um por item |
+| `validation` | Comandos exatos que provam a tarefa (ex.: o teste da própria tarefa). Nunca invente um comando que o projeto não tem |
+
+Valide com `agent-kit validate --plan tasks/prd-[nome-funcionalidade]/plan.json` antes de
+apresentar ou executar.
 
 ## Marcação de Paralelismo (Obrigatório)
 

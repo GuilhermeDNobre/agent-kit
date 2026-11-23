@@ -2,8 +2,8 @@
 description: Aplica as correções já diagnosticadas no bugs.md e cria os testes de regressão. Rodado por um worker.
 ---
 
-> **Executado por:** worker, despachado pelo Claude via Orca (ver `CLAUDE.md` seção 2).
-> Você recebe este comando dentro de um brief com `task_id` e `dispatch_id` injetados.
+> **Executado por:** worker, despachado pelo coordenador (ver o guia do runtime em `.agent-kit/runtime/`).
+> Você recebe um brief gerado por `agent-kit wf dispatch`, com a seção CORREÇÃO preenchida.
 >
 > Regras que valem do início ao fim:
 > - Leia `AGENTS.md`, `docs/agents/worker.md` e `.claude/rules/README.md` antes de começar.
@@ -11,7 +11,7 @@ description: Aplica as correções já diagnosticadas no bugs.md e cria os teste
 > - **Nunca** commite, faça stage, push ou troque de branch.
 > - **Nunca** escolha stack, framework, gerenciador de pacotes ou ferramenta de testes.
 > - Se um comando de validação ainda não existir no projeto, diga isso — não invente saída.
-> - Ao terminar, envie `worker_done` uma única vez e pare. O Claude revisa e fecha seu terminal.
+> - Ao terminar, encerre com o bloco `agent-kit-report` (`docs/agents/worker.md` seção 4) e pare.
 
 ---
 
@@ -22,7 +22,7 @@ A causa raiz e a solução pretendida **já estão escritas no `bugs.md`**. O di
 Claude, não seu. Você implementa a solução decidida.
 
 <critical>Você DEVE corrigir TODOS os bugs listados no arquivo bugs.md</critical>
-<critical>Implemente a "Solução pretendida" descrita em cada bug. Se você concluir que ela está errada ou incompleta, **não invente outra solução**: envie `orca orchestration ask` ou uma `escalation` e aguarde</critical>
+<critical>Implemente a "Solução pretendida" descrita em cada bug. Se você concluir que ela está errada ou incompleta, **não invente outra solução**: termine com `outcome: blocked`, explicando por quê, e pare</critical>
 <critical>Para CADA bug corrigido, crie os testes de regressão exigidos no campo "Teste de regressão exigido"</critical>
 <critical>A tarefa NÃO está completa até que TODOS os bugs estejam corrigidos e a validação de cada um tenha sido executada</critical>
 <critical>NÃO aplique correções superficiais ou gambiarras — a correção vai na causa raiz apontada no bugs.md</critical>
@@ -61,8 +61,8 @@ Testes de Regressão Exigidos: [do bugs.md]
 Validação: [do bugs.md]
 ```
 
-Se algum destes campos estiver ausente ou contraditório no `bugs.md`, pare e pergunte com
-`orca orchestration ask`. Não preencha a lacuna por conta própria.
+Se algum destes campos estiver ausente ou contraditório no `bugs.md`, termine com
+`outcome: blocked` dizendo qual. Não preencha a lacuna por conta própria.
 
 ### 3. Implementação das Correções (Obrigatório)
 
@@ -168,6 +168,6 @@ Gerar um resumo final:
 - Se um bug exigir mudanças arquiteturais significativas, documente a justificativa
 - Se descobrir novos bugs durante a correção, documente-os no bugs.md
 
-<critical>Você não tem MCP disponível. Se precisar de documentação de biblioteca que não está no repositório, peça ao Claude com `orca orchestration ask` — não chute a API</critical>
+<critical>Se precisar de documentação de biblioteca que não está no repositório e não tiver ferramenta para lê-la, termine com `outcome: blocked` — não chute a API</critical>
 <critical>COMECE A IMPLEMENTAÇÃO IMEDIATAMENTE após o planejamento — não espere aprovação</critical>
-<critical>Ao terminar, envie `worker_done` uma única vez com `--outcome succeeded` ou `--outcome failed`, citando a saída de validação real. Depois pare: não commite, não feche o terminal, não inicie trabalho novo</critical>
+<critical>Ao terminar, encerre com o bloco `agent-kit-report` (`outcome` `succeeded`, `failed` ou `blocked`), citando a saída de validação real. Depois pare: não commite, não feche o terminal, não inicie trabalho novo</critical>
