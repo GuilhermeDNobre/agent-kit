@@ -36,7 +36,7 @@ deterministic tool for *what* to do next, and it persists everything:
 |---|---|
 | Dependencies, waves, max workers, file ownership | `agent-kit wf next` (DAG scheduler) |
 | Self-contained, reproducible briefs | `agent-kit wf dispatch` / `wf gate` (stored with a hash) |
-| The exact runtime call | Runtime adapters: T3 `delegate_task` args, or the Orca command recipe |
+| The exact runtime call | Runtime adapters: T3 `delegate_task` args, or Orca `worker-start` |
 | Independent verification | `agent-kit wf verify` runs the checks itself and records exit codes |
 | Gates and reviewer independence | `agent-kit wf review --gate …` refuses the implementer as reviewer |
 | Retry, escalation, fix cycles, timeouts | `.agent-kit/autonomy.json` + the workflow engine |
@@ -79,13 +79,15 @@ Existing files are never overwritten without `--force` or an explicit confirmati
 ## CLI
 
 ```bash
-npx @guilhermednobre/agent-kit init [dir] [--runtime t3|orca] [--tracker local|linear --linear-team KEY]
+npx @guilhermednobre/agent-kit init [dir] [--runtime t3|orca] [--tracker local|linear --linear-team KEY --linear-project NAME]
                                          [--mode greenfield|existing] [--name] [--description]
                                          [--force] [-y] [--dry-run]
 agent-kit validate [--plan tasks/prd-x/plan.json]
 agent-kit policy check -- <command>        # exit 3 = needs human approval
 agent-kit policy check --path <file>
 agent-kit runtimes
+agent-kit runtime detect [--t3-tools]       # which runtime hosts this session
+agent-kit runtime set <t3|orca>            # switch: config, CLAUDE.md import, Linear route
 agent-kit wf help                          # the workflow commands the coordinator uses
 ```
 
@@ -97,18 +99,24 @@ lockfile; anything unknown stays `TBD`).
 
 1. **Node 20+**.
 2. **Claude Code** with Claude Opus as the coordinator model.
-3. **T3 Code** (recommended runtime) with the providers you want enabled — e.g. **Antigravity** for
-   Gemini workers. `/configurar-worker` reads `orchestrator_capabilities`, so only models your
-   account really has are offered. Quotas are real: Google AI Pro does not mean unlimited API use;
-   tune `maxWorkers` and use the `fast` profile for cheap work.
-4. Optional **Linear**: `init --tracker linear`. On T3, connect the project to Linear in T3 and that
-   is all — the coordinator reaches Linear through T3's issue tools, no API key. On Orca (or to get
-   real sub-issues and import), use the API mode: `--linear-team ENG` and a personal key in
-   `LINEAR_API_KEY`. See [docs/linear.md](docs/linear.md).
-5. Run `npx @guilhermednobre/agent-kit init`, open Claude Code, run `/configurar-worker`, then
-   `/executar-workflow <objective>`.
+3. A runtime — **the session you coordinate from decides which one**:
+   - **Orca**: run Claude Code in an Orca terminal. Workers are supervised `worker-start` agents
+     (Antigravity, Codex, Claude, …) and Orca wakes the coordinator when they finish. Any terminal
+     outside T3 also defaults to Orca.
+   - **T3 Code**: run the coordinator in T3 with the providers you want enabled.
+     `/configurar-worker` reads `orchestrator_capabilities`, so only models your account has are
+     offered.
 
-Orca stays supported: `init --runtime orca` writes the Orca guide and the legacy terminal recipe.
+   Both guides are installed; `/configurar-worker` detects the session and switches with
+   `agent-kit runtime set`. Quotas are real: tune `maxWorkers` and use the `fast` profile for
+   cheap work.
+4. Optional **Linear**: `init --tracker linear`. Each repository gets **its own Linear project**
+   (`tracker.linear.project`, default: the project name), isolated from other projects' tasks. On
+   T3, Linear goes through T3's issue tools; on Orca, through Orca's Linear connection
+   (`--linear-team KEY`) — neither needs an API key. The API mode (`LINEAR_API_KEY`) also creates
+   the project when missing and can import runs. See [docs/linear.md](docs/linear.md).
+5. Run `npx @guilhermednobre/agent-kit init`, open Claude Code in that session, run
+   `/configurar-worker`, then `/executar-workflow <objective>`.
 
 ## Documentation
 

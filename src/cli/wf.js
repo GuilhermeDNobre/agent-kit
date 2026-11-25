@@ -42,7 +42,7 @@ agent-kit wf — workflow state for the coordinator (JSON output).
   wf new <run> --from-linear <ISSUE-ID>                       create a run from a Linear parent issue
   wf next <run>                                               what to dispatch, verify, review, reconcile
   wf dispatch <run> <task> [--profile <name>]                 write the brief, start an attempt, print the runtime call
-  wf started <run> <task> --ref <runtime-id> [--gate <gate>]  bind the runtime id (T3 taskId / Orca handle)
+  wf started <run> <task> --ref <runtime-id> [--gate <gate>]  bind the runtime id (T3 taskId / Orca dispatch id)
   wf touch <run> <task> --note <text>                         record progress (resets the stall timer)
   wf report <run> <task> --file <path> | --text <text>        record the worker's final message
   wf verify <run> <task> [--cwd <dir>]                        run the task's checks independently
@@ -230,8 +230,8 @@ const HANDLERS = {
     const briefPath = await saveArtifact(root, runId, `briefs/${safe(taskId)}.${attempt.number}.gate-${safe(gateId)}.md`, brief);
     const pseudoTask = { ...task, id: `${task.id}`, title: `gate ${gateId}: ${task.title}`, role: gateConfig.role };
     const pseudoAttempt = { ...attempt, briefPath, clientRequestId: `agent-kit:${run.id}:${task.id}:${attempt.number}:gate-${gateId}` };
-    const call = adapter.dispatch({ run, task: pseudoTask, attempt: pseudoAttempt, brief, profile, config: settings.config });
-    if (call.then) call.then = `agent-kit wf started ${run.id} ${task.id} --gate ${gateId} --ref <taskId>`;
+    const call = adapter.dispatch({ run, task: pseudoTask, attempt: pseudoAttempt, brief, profile, config: settings.config, gate: gateId });
+    if (call.then) call.then = call.then.replace(`wf started ${run.id} ${task.id} `, `wf started ${run.id} ${task.id} --gate ${gateId} `);
     return persist(context, run, { task: taskId, gate: gateId, profile: profile.name, reviewer: executorId(profile), briefPath, call });
   },
 

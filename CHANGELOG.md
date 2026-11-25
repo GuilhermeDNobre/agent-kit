@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.4.0 — unreleased
+
+### Changed
+
+- **Orca is a first-class runtime again.** The Orca adapter now dispatches one supervised
+  `orca orchestration worker-start --spec-file <brief> --agent --model --effort` per task, records
+  the dispatch id, and lets Orca wake the coordinator with `worker_done` / `question` /
+  `escalation`. Status, cancel and resume use `worker-show`, `worker-read` and `worker-stop`. The
+  old terminal recipe (`terminal create` + `dispatch` + `terminal send`) and the polling Monitor —
+  which Orca forbids, because a script's `check` swallows the coordinator's mail — are gone.
+  Attempts recorded with the old `<terminal>|<task>` ref still get the old status/cancel commands.
+- **The session decides the runtime.** `init` installs both runtime guides and detects the
+  runtime (T3 session → `t3`; Orca terminal → `orca`; any other terminal → `orca`).
+  `/configurar-worker` confirms it with `agent-kit runtime detect` and switches with
+  `agent-kit runtime set <t3|orca>` (config, `CLAUDE.md` import, Linear route).
+- `/configurar-worker` covers both runtimes in one file; on Orca, profiles store the Orca agent id
+  as `provider`, the model, and `options.effort`; smoke tests are real `worker-start` workers.
+- `runtimes.orca` is now `{ worktree: "current" | "new-child", keepOpen }`; `launchCommand` and
+  `readiness` are obsolete (`agent-kit validate` warns).
+
+### Added
+
+- **Linear through Orca** (`tracker.linear.via: "orca"`, default on Orca): no API key; the CLI runs
+  `orca linear create/relation/status/comment` itself — real sub-issues, `blocks` relations and
+  automatic sync.
+- **One Linear project per repository** on every route (`t3`, `orca`, `api`):
+  `tracker.linear.project.name` (default: the project name, `init --linear-project` overrides) is
+  required, and every issue is created in it. The API route finds the project in the team or
+  creates it; the Orca route creates it through the API when a key is available, otherwise asks
+  the user to create it once; the T3 route passes `project` on every `create_issue`.
+- `agent-kit runtime detect [--t3-tools]` and `agent-kit runtime set <t3|orca>`.
+
 ## 0.3.0 — unreleased
 
 ### Added

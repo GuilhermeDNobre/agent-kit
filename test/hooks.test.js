@@ -13,7 +13,7 @@ const TEMPLATES_DIR = fileURLToPath(new URL("../templates/", import.meta.url));
 async function initProject() {
   const root = await mkdtemp(join(tmpdir(), "agent-kit-hooks-"));
   const detected = { stack: null, manifest: null, commands: {} };
-  const files = [...(await planFiles(TEMPLATES_DIR, { runtime: "t3" })), ...(await generatedFiles({ detected, answers: { name: "x" }, choices: { runtime: "t3", tracker: "local" } }))];
+  const files = [...(await planFiles(TEMPLATES_DIR)), ...(await generatedFiles({ detected, answers: { name: "x" }, choices: { runtime: "t3", tracker: "local" } }))];
   await installFiles({ files, targetDir: root, mode: "greenfield", vars: { RUNTIME: "t3" }, flags: ["runtime-t3"], resolveConflict: async () => "skip", dryRun: false });
   return root;
 }

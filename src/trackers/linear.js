@@ -30,6 +30,8 @@ const M_UPDATE = `mutation Update($id: String!, $input: IssueUpdateInput!) { iss
 const M_RELATION = `mutation Relate($input: IssueRelationCreateInput!) { issueRelationCreate(input: $input) { success } }`;
 const M_COMMENT = `mutation Comment($input: CommentCreateInput!) { commentCreate(input: $input) { success } }`;
 const Q_LABELS = `query Labels($teamId: ID!) { issueLabels(first: 250, filter: { team: { id: { eq: $teamId } } }) { nodes { id name } } }`;
+const Q_PROJECT = `query Project($name: String!) { projects(first: 50, filter: { name: { eq: $name } }) { nodes { id name url teams { nodes { key } } } } }`;
+const M_PROJECT = `mutation CreateProject($input: ProjectCreateInput!) { projectCreate(input: $input) { success project { id name url } } }`;
 const Q_PARENT = `query Parent($id: String!) {
   issue(id: $id) {
     id identifier title url
@@ -40,8 +42,28 @@ const Q_PARENT = `query Parent($id: String!) {
   }
 }`;
 
+export async function ensureLinearProject({ settings, gql, teamId, teamKey }) {
+  const name = settings.project?.name;
+  if (!name) throw new Error("tracker.linear.project.name is not set; run /configurar-worker");
+  const nodes = (await gql(Q_PROJECT, { name })).projects.nodes;
+  const found = nodes.find((project) => project.name === name && project.teams.nodes.some((team) => team.key === teamKey));
+  if (found) return { id: found.id, name: found.name, url: found.url, created: false };
+  const result = (await gql(M_PROJECT, { input: { name, teamIds: [teamId], description: settings.project.description || "Tarefas do agent-kit para este repositório." } })).projectCreate;
+  if (!result.success) throw new Error(`Linear refused to create project "${name}"`);
+  return { ...result.project, created: true };
+}
+
 export function linearTracker({ settings, gql }) {
   let cache = null;
+  let project = null;
+
+  async function ensureProject() {
+    if (project) return project;
+    if (settings.project?.id) return (project = { id: settings.project.id, name: settings.project.name || null });
+    if (settings.projectId) return (project = { id: settings.projectId, name: null });
+    const info = await team();
+    return (project = await ensureLinearProject({ settings, gql, teamId: info.id, teamKey: info.key }));
+  }
 
   async function team() {
     if (cache) return cache;
@@ -77,10 +99,11 @@ export function linearTracker({ settings, gql }) {
 
     async publishPlan(run) {
       const info = await team();
-      const base = { teamId: info.id, ...(settings.projectId ? { projectId: settings.projectId } : {}), ...(info.labelIds.length ? { labelIds: info.labelIds } : {}) };
+      const { id: projectId } = await ensureProject();
+      const base = { teamId: info.id, projectId, ...(info.labelIds.length ? { labelIds: info.labelIds } : {}) };
       if (!run.tracker?.parent) {
         const parent = await create({ ...base, title: run.objective || `agent-kit run ${run.id}`, description: parentDescription(run) });
-        run.tracker = { kind: "linear", teamKey: info.key, parent };
+        run.tracker = { kind: "linear", teamKey: info.key, project: { id: projectId, name: project.name || null }, parent };
       }
       const created = [];
       for (const id of run.order) {
@@ -100,8 +123,10 @@ export function linearTracker({ settings, gql }) {
           await gql(M_RELATION, { input: { issueId: run.tasks[dep].tracker.id, relatedIssueId: run.tasks[id].tracker.id, type: "blocks" } });
         }
       }
-      return { created, parent: run.tracker.parent };
+      return { created, parent: run.tracker.parent, project };
     },
+
+    ensureProject,
 
     async sync(run) {
       if (!run.tracker?.parent) return { synced: 0, pending: run.events.filter((event) => !event.synced).length, skipped: "plan not published" };

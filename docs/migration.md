@@ -1,3 +1,21 @@
+# Migrating from 0.3 to 0.4
+
+1. `npx @guilhermednobre/agent-kit@latest init -y` in the project: it adds the runtime guide you
+   do not have yet and keeps every existing file. Take the new `.agent-kit/runtime/orca.md`,
+   `.claude/commands/configurar-worker.md` and `docs/agents/worker.md` with `init` (choose `b`) and
+   merge them.
+2. Open Claude Code in the session that will coordinate (an Orca terminal or T3) and run
+   `/configurar-worker`. It detects the runtime, switches with `agent-kit runtime set` if needed,
+   and rewrites the Orca profiles (`provider` = Orca agent id, `model`, `options.effort`).
+3. Remove `runtimes.orca.launchCommand` and `runtimes.orca.readiness` from `.agent-kit/config.json`.
+4. With Linear: set `tracker.linear.project.name` (the repository's dedicated Linear project) and,
+   on Orca, `tracker.linear.via: "orca"` and `tracker.linear.teamKey`. `projectId` still works, but
+   `project.id` replaces it.
+5. `agent-kit validate`.
+
+Runs in flight keep their old Orca refs (`<terminal>|<task>`); `wf cancel` and `wf resume` print
+the old terminal commands for them.
+
 # Migrating from 0.2 (Orca-only) to 0.3
 
 0.3 keeps every 0.2 command and template, and adds a runtime-independent core, the T3 runtime, a

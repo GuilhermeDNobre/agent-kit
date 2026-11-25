@@ -4,17 +4,11 @@ import { dirname, join, relative, sep } from "node:path";
 import { render } from "./render.js";
 
 const DOTTED = { claude: ".claude", "agent-kit": ".agent-kit" };
-const RUNTIME_GUIDE = /^agent-kit[\\/]runtime[\\/]([a-z0-9-]+)\.md$/;
-
-export async function planFiles(templatesDir, { runtime } = {}) {
+// Every runtime guide is installed: the session that runs /configurar-worker decides the runtime,
+// and switching (agent-kit runtime set) only changes which guide CLAUDE.md imports.
+export async function planFiles(templatesDir) {
   const sources = await listFiles(templatesDir);
-  return sources
-    .map((source) => ({ source, relativePath: relative(templatesDir, source) }))
-    .filter(({ relativePath }) => {
-      const guide = RUNTIME_GUIDE.exec(relativePath);
-      return !guide || !runtime || guide[1] === runtime;
-    })
-    .map(({ source, relativePath }) => ({ source, target: toTargetPath(relativePath) }));
+  return sources.map((source) => ({ source, target: toTargetPath(relative(templatesDir, source)) }));
 }
 
 async function listFiles(dir) {

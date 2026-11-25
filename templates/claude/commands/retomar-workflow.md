@@ -17,14 +17,14 @@ description: Retoma um run interrompido reconciliando cada tentativa em andament
 | Grupo | Ação |
 |---|---|
 | `reconcile` | Execute a `call` de status impressa (uma vez por tarefa). Terminado → registre com `wf report`. Ainda rodando → `wf touch <run> <task> --note "..."`. Morto ou desconhecido → cancele no runtime e `wf lost <run> <task> --reason "<evidência>"` |
-| `redispatchSameKey` | `agent-kit wf dispatch <run> <task>` devolve a mesma chamada com a mesma `clientRequestId`; o runtime deduplica |
+| `redispatchSameKey` | T3: `agent-kit wf dispatch <run> <task>` devolve a mesma chamada com a mesma `clientRequestId`; o runtime deduplica. Orca: confira `orca orchestration worker-list` antes — se o worker existe, registre com `wf started`; senão, `wf dispatch` |
 | `foreign` | Tentativa iniciada em outro runtime: verifique lá (ou os arquivos no disco). Se não houver como recuperar, `wf lost` com a evidência |
 | `gates` | Gates em andamento: consulte o status pela `call`; terminado → `wf review --gate ... --file ...` |
 
 3. Com tracker `linear` (`via: "api"`) e sem `.agent-kit/runs/<run>/` nesta máquina, recrie o run a
    partir do Linear: `agent-kit wf new <run> --from-linear <ISSUE-ID>` (tarefas concluídas no Linear
-   entram como concluídas). Com `via: "t3"` a importação não está disponível: retome a partir do run
-   file (commite `.agent-kit/runs/` se precisar trocar de máquina).
+   entram como concluídas). Com `via: "t3"` ou `via: "orca"` a importação não está disponível:
+   retome a partir do run file (commite `.agent-kit/runs/` se precisar trocar de máquina).
 4. `agent-kit wf sync <run>` se houver eventos pendentes para o tracker (com `via: "t3"`, execute as
    chamadas impressas e confirme com `--ack`).
 5. Continue pelo passo 5 de `/executar-workflow`.

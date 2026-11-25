@@ -76,9 +76,10 @@ Validators — `agent-kit-review`:
 Runtime-specific delivery (the brief repeats it):
 
 - **T3 Code**: the final message itself is delivered to the coordinator. Stop after it.
-- **Orca**: also send it once with `orca orchestration send --type worker_done --task-id <task_id>
-  --dispatch-id <dispatch_id> --outcome succeeded|failed --body "<the message with the block>"
-  --files-modified "path/a,path/b" --json`, then stop at an idle prompt without exiting the shell.
+- **Orca**: follow the preamble Orca put above the brief. Send `worker_done` exactly once, with
+  `--outcome succeeded|failed` and the message with the block as the body (`--body-file`, never a
+  heredoc), then end your turn. To ask the coordinator instead of guessing, use the preamble's `ask`
+  and end your turn; Orca wakes you with the answer.
 
 The coordinator re-runs the validation and reads the diff itself. A success claim without real
 validation is treated as a failure.

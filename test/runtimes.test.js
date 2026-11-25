@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { getAdapter, listAdapters, registerAdapter } from "../src/runtimes/index.js";
 import { defaultConfig } from "../src/core/config.js";
+import { detectRuntime } from "../src/runtimes/detect.js";
 
 const run = { id: "r1", objective: "auth" };
 const task = { id: "2.0", title: "Login form", role: "implementation", tracker: { identifier: "ENG-42" } };
@@ -73,20 +74,55 @@ test("T3 refuses a worker profile without a model", () => {
   assert.deepEqual(getAdapter("t3").validateProfile({ name: "c", provider: "coordinator" }), []);
 });
 
-test("Orca dispatch produces the legacy recipe with the brief file, the model and the Linear issue", () => {
+test("Orca dispatch is one supervised worker-start with the brief file, agent, model and effort", () => {
   const config = defaultConfig({ runtime: "orca" });
-  config.runtimes.orca = { launchCommand: "tool --model {model}", readiness: "prompt >" };
-  const call = getAdapter("orca").dispatch({ run, task, attempt, brief: "b", profile, config });
+  const call = getAdapter("orca").dispatch({ run, task, attempt, brief: "b", profile: { ...profile, options: { effort: "high" } }, config });
   assert.equal(call.kind, "shell");
+  const start = call.commands.find((command) => command.includes("worker-start"));
+  assert.match(start, /^orca orchestration worker-start --environment local --spec-file \.agent-kit\/runs\/r1\/briefs\/2\.0\.1\.md /);
+  assert.match(start, /--task-title "2\.0 Login form" --agent antigravity --model "model-x" --effort high --worktree current --json$/);
   const text = call.commands.join("\n");
-  assert.match(text, /--command "tool --model model-x"/);
-  assert.match(text, /--linear-issue ENG-42/);
-  assert.match(text, /task-create --spec "\$\(cat \.agent-kit\/runs\/r1\/briefs\/2\.0\.1\.md\)"/);
-  assert.doesNotMatch(text, /--inject/);
-  assert.match(getAdapter("orca").cancel({ attempt: { runtimeRef: "term-1|task-1" } }).commands[0], /--terminal term-1 /);
-  assert.equal(getAdapter("orca").interpretStatus({ type: "worker_done", body: "x" }).finished, true);
+  assert.doesNotMatch(text, /--inject|terminal (create|send)|\bdispatch --task/);
+  assert.match(call.then, /wf started r1 2\.0 --ref <dispatch_id/);
+  assert.ok(call.notes.some((note) => /Never poll/.test(note)));
 });
 
-test("Orca needs a configured launch command", () => {
-  assert.match(getAdapter("orca").validateProfile(profile, defaultConfig({ runtime: "orca" }))[0], /launchCommand is not set/);
+test("Orca honours new-child worktrees and keep-open, but gates always share the current worktree", () => {
+  const config = defaultConfig({ runtime: "orca" });
+  config.runtimes.orca = { worktree: "new-child", keepOpen: true };
+  const orca = getAdapter("orca");
+  const start = orca.dispatch({ run, task, attempt, brief: "b", profile, config }).commands[1];
+  assert.match(start, /--worktree new-child --name r1-2-0 --keep-open --json$/);
+  const gate = orca.dispatch({ run, task, attempt, brief: "b", profile, config, gate: "qa" }).commands[1];
+  assert.match(gate, /--worktree current --keep-open --json$/);
+  assert.doesNotMatch(start, /--effort/, "effort is only passed with a model option");
+});
+
+test("Orca status, cancel and messages use the dispatch id; pre-0.4 terminal refs still work", () => {
+  const orca = getAdapter("orca");
+  const ref = { runtimeRef: "dsp_1" };
+  assert.deepEqual(orca.status({ attempt: ref }).commands, ["orca orchestration worker-show --dispatch dsp_1 --json", "orca orchestration worker-read --dispatch dsp_1 --limit 50 --json"]);
+  assert.deepEqual(orca.cancel({ attempt: ref }).commands, ["orca orchestration worker-stop --dispatch dsp_1 --json"]);
+  assert.match(orca.cancel({ attempt: { runtimeRef: "term-1|task-1" } }).commands[0], /terminal close --terminal term-1 /);
+  assert.deepEqual(orca.interpretStatus({ type: "worker_done", body: "x", payload: { outcome: "failed" } }), { finished: true, summary: "x", failed: true });
+  assert.equal(orca.interpretStatus({ type: "escalation", payload: { stopReason: "exited" } }).stopReason, "exited");
+  assert.equal(orca.interpretStatus({ type: "question", id: "m1" }).messageId, "m1");
+  assert.deepEqual(orca.interpretStatus({ type: "heartbeat" }), { finished: false });
+});
+
+test("Orca refuses a worker profile without agent or model, unless the agent picks its own model", () => {
+  const orca = getAdapter("orca");
+  assert.match(orca.validateProfile({ name: "fast", provider: "antigravity", model: null })[0], /has no model/);
+  assert.match(orca.validateProfile({ name: "fast", provider: null, model: "m" })[0], /no Orca agent id/);
+  assert.deepEqual(orca.validateProfile({ name: "fast", provider: "zcode", model: null, options: { agentDefaultModel: true } }), []);
+  assert.deepEqual(orca.validateProfile({ name: "c", provider: "coordinator" }), []);
+  assert.equal(orca.dispatch({ run, task, attempt, brief: "b", profile: { name: "c", provider: "coordinator" }, config: defaultConfig({ runtime: "orca" }) }).kind, "coordinator");
+});
+
+test("runtime detection: T3 tools or T3 env win, an Orca terminal is Orca, anything else defaults to Orca", () => {
+  assert.equal(detectRuntime({ TERM_PROGRAM: "Orca" }, { t3Tools: true }).runtime, "t3");
+  assert.equal(detectRuntime({ T3CODE_THREAD_ID: "x", ORCA_TERMINAL_HANDLE: "t" }).runtime, "t3");
+  assert.match(detectRuntime({ ORCA_TERMINAL_HANDLE: "term_1" }).evidence, /ORCA_TERMINAL_HANDLE/);
+  assert.equal(detectRuntime({ TERM_PROGRAM: "Orca" }).runtime, "orca");
+  assert.match(detectRuntime({ TERM_PROGRAM: "vscode" }).evidence, /default outside T3/);
 });

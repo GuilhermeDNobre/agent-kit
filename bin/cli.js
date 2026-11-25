@@ -8,7 +8,8 @@ import { detectProject } from "../src/detect.js";
 import { planFiles, installFiles } from "../src/install.js";
 import { generatedFiles, normalizeInitChoices } from "../src/generate.js";
 import { runWorkflowCommand } from "../src/cli/wf.js";
-import { runValidate, runPolicy, runRuntimes } from "../src/cli/tools.js";
+import { runValidate, runPolicy, runRuntimes, runRuntime } from "../src/cli/tools.js";
+import { detectRuntime } from "../src/runtimes/detect.js";
 
 const TEMPLATES_DIR = fileURLToPath(new URL("../templates/", import.meta.url));
 const PACKAGE_JSON = fileURLToPath(new URL("../package.json", import.meta.url));
@@ -20,6 +21,7 @@ const OPTIONS = {
   runtime: { type: "string" },
   tracker: { type: "string" },
   "linear-team": { type: "string" },
+  "linear-project": { type: "string" },
   force: { type: "boolean", default: false },
   yes: { type: "boolean", short: "y", default: false },
   "dry-run": { type: "boolean", default: false },
@@ -37,14 +39,17 @@ Usage:
   agent-kit policy check -- <command>  is this command allowed autonomously? (exit 3 = needs approval)
   agent-kit policy check --path <p>    is writing this path allowed?
   agent-kit runtimes                   list runtime adapters
+  agent-kit runtime detect [--t3-tools] which runtime hosts this session (Orca, T3)
+  agent-kit runtime set <t3|orca>      switch the project's runtime (config + CLAUDE.md import)
 
 Init options:
   --name <name>           Project name written into AGENTS.md
   --description <text>    One-line project description
   --mode <mode>           greenfield | existing   (default: auto-detected)
-  --runtime <runtime>     t3 (default, recommended) | orca (legacy)
+  --runtime <runtime>     t3 | orca  (default: detected; Orca outside a T3 session)
   --tracker <tracker>     local (default) | linear
-  --linear-team <KEY>     Linear team key (needed only for Linear through the API, e.g. with Orca)
+  --linear-team <KEY>     Linear team key (needed for Linear through Orca or the API)
+  --linear-project <name> Linear project that isolates this repository's tasks (default: project name)
   --force                 Overwrite existing files without asking
   -y, --yes               Non-interactive; skip files that already exist
   --dry-run               Show what would be written, write nothing
@@ -62,6 +67,7 @@ const SUBCOMMANDS = {
   validate: runValidate,
   policy: runPolicy,
   runtimes: runRuntimes,
+  runtime: runRuntime,
 };
 
 async function main() {
@@ -96,14 +102,14 @@ async function runInit(targetDir, flags) {
   console.log(`Target:  ${targetDir}`);
   console.log(`Mode:    ${mode}${flags.mode ? " (forced)" : " (detected)"}`);
   if (detected.manifest) console.log(`Stack:   ${detected.stack} (${detected.manifest})`);
-  console.log(`Runtime: ${choices.runtime}${choices.runtime === "orca" ? " (legacy)" : ""}`);
+  console.log(`Runtime: ${choices.runtime}${flags.runtime ? " (forced)" : ` (detected: ${detectRuntime().evidence})`}`);
   console.log(`Tracker: ${choices.tracker}${choices.linearTeam ? ` (team ${choices.linearTeam})` : ""}`);
   console.log("");
 
   const answers = await collectAnswers({ detected, flags, interactive });
   const vars = buildVars(detected, answers, choices);
   const files = [
-    ...(await planFiles(TEMPLATES_DIR, { runtime: choices.runtime })),
+    ...(await planFiles(TEMPLATES_DIR)),
     ...(await generatedFiles({ detected, answers, choices })),
   ];
   const resolveConflict = makeConflictResolver(flags, interactive);
@@ -208,17 +214,18 @@ function summarize(counts) {
 
 function printNextSteps(mode, choices) {
   const steps = [
-    "Open Claude Code here and run /configurar-worker to choose the worker models per profile.",
+    "Open Claude Code in the session that will coordinate (an Orca terminal, or T3 Code) and run /configurar-worker: it confirms the runtime from that session and chooses the worker models per profile.",
     "Read AGENTS.md and fill in anything marked TBD.",
     mode === "existing"
       ? "Verify the commands table in AGENTS.md and the checks in .agent-kit/config.json actually run."
       : "Decide the stack, then update AGENTS.md, the checks in .agent-kit/config.json and .claude/rules/README.md.",
     "Review .agent-kit/autonomy.json (limits, permissions, protected actions).",
   ];
-  if (choices.tracker === "linear" && choices.runtime === "t3") {
-    steps.push("Connect this project to Linear in T3 Code (Linear is reached through T3's issue tools; no API key needed).");
-  } else if (choices.tracker === "linear") {
-    steps.push("Export LINEAR_API_KEY (a Linear personal API key) before running workflows.");
+  if (choices.tracker === "linear") {
+    steps.push(choices.runtime === "t3"
+      ? "Connect this project to Linear in T3 Code (Linear is reached through T3's issue tools; no API key needed)."
+      : "Connect Linear in Orca (orca linear team list must show your team); no API key needed.");
+    steps.push("/configurar-worker creates or confirms the dedicated Linear project for this repository (tracker.linear.project).");
   }
   steps.push("Start a full run with /executar-workflow <objective>.");
   console.log("");

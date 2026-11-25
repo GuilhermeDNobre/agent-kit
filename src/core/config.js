@@ -34,10 +34,10 @@ export function defaultConfig({ runtime = "t3", checks = [] } = {}) {
     tracker: {
       kind: "local",
       linear: {
-        via: runtime === "t3" ? "t3" : "api",
+        via: runtime === "t3" ? "t3" : "orca",
         apiKeyEnv: "LINEAR_API_KEY",
         teamKey: null,
-        projectId: null,
+        project: { name: null, id: null, description: null },
         labels: ["agent-kit"],
         stateMap: {
           pending: "unstarted",
@@ -84,7 +84,7 @@ export function defaultConfig({ runtime = "t3", checks = [] } = {}) {
     },
     runtimes: {
       t3: { isolation: "shared" },
-      orca: { launchCommand: null, readiness: null },
+      orca: { worktree: "current", keepOpen: false },
     },
   };
 }
@@ -232,17 +232,23 @@ export function validateConfig(config) {
   for (const [role, profile] of Object.entries(config.roles || {})) {
     if (!config.profiles?.[profile]) errors.push(`roles.${role} points to unknown profile "${profile}"`);
   }
-  if (config.runtime === "orca" && !config.runtimes?.orca?.launchCommand) {
-    warnings.push("runtimes.orca.launchCommand is not set — run /configurar-worker");
+  const worktree = config.runtimes?.orca?.worktree;
+  if (worktree && !["current", "new-child"].includes(worktree)) errors.push('runtimes.orca.worktree must be "current" or "new-child"');
+  if (config.runtimes?.orca?.launchCommand) {
+    warnings.push("runtimes.orca.launchCommand is obsolete (workers start with worker-start --agent); run /configurar-worker");
   }
   return { errors, warnings };
 }
 
 function validateLinear(linear, errors, runtime) {
   const via = linear.via || "api";
-  if (!["api", "t3"].includes(via)) errors.push('tracker.linear.via must be "api" or "t3"');
-  if (via === "t3" && runtime !== "t3") errors.push('tracker.linear.via "t3" needs runtime "t3"; use "api" with Orca');
-  if (via === "api" && !linear.teamKey) errors.push('tracker.linear.teamKey is required when tracker.linear.via is "api"');
+  if (!["api", "t3", "orca"].includes(via)) errors.push('tracker.linear.via must be "api", "t3" or "orca"');
+  if (via === "t3" && runtime !== "t3") errors.push('tracker.linear.via "t3" needs runtime "t3"; use "orca" or "api" with Orca');
+  if (via === "orca" && runtime !== "orca") errors.push('tracker.linear.via "orca" needs runtime "orca"; use "t3" or "api" with T3');
+  if (via !== "t3" && !linear.teamKey) errors.push(`tracker.linear.teamKey is required when tracker.linear.via is "${via}"`);
+  if (!linear.project?.name && !linear.project?.id && !linear.projectId) {
+    errors.push("tracker.linear.project.name is required: every repository keeps its tasks in its own Linear project");
+  }
   if (via === "api" && !linear.apiKeyEnv) errors.push("tracker.linear.apiKeyEnv is required");
   for (const state of Object.keys(linear.stateMap || {})) {
     if (!TASK_STATES.includes(state)) errors.push(`tracker.linear.stateMap has unknown task state "${state}"`);
