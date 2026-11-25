@@ -243,7 +243,8 @@ O review não termina no relatório: ele vira o veredito do gate.
    escreve em `tasks/prd-<feature>/bugs.md` (`.claude/templates/bugs-template.md`).
 3. **Não fazer merge.** Os limites de tentativas e ciclos de correção vêm de
    `.agent-kit/autonomy.json`; ao esgotá-los, vale `escalation.onBudgetExhausted`.
-4. No runtime Orca, feche o terminal do worker só depois que todos os gates forem registrados
+4. No runtime Orca, não pare (`worker-stop`) o worker antes de registrar todos os gates: workers que
+   terminam fecham sozinhos, e um follow-up vai por `orca orchestration send --to dispatch:<id>`
    (`.agent-kit/runtime/orca.md`).
 
 <critical>Validador não altera arquivos: só lê, roda verificações e reporta</critical>

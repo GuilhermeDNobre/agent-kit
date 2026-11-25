@@ -48,16 +48,25 @@ test("validateConfig reports unknown runtime, tracker, roles and missing Linear 
   assert.ok(errors.some((error) => /teamKey is required/.test(error)));
 });
 
-test("Linear through T3 needs no team key or API key, but only works on the T3 runtime", () => {
+test("Linear goes through each runtime's own connection, always into a dedicated project", () => {
   const t3 = defaultConfig({ runtime: "t3" });
   t3.tracker.kind = "linear";
   assert.equal(t3.tracker.linear.via, "t3");
+  assert.ok(validateConfig(t3).errors.some((error) => /project.name is required/.test(error)));
+  t3.tracker.linear.project.name = "shop";
   assert.deepEqual(validateConfig(t3).errors, []);
+
   const orca = defaultConfig({ runtime: "orca" });
   orca.tracker.kind = "linear";
-  assert.equal(orca.tracker.linear.via, "api");
+  orca.tracker.linear.project.name = "shop";
+  assert.equal(orca.tracker.linear.via, "orca");
+  assert.ok(validateConfig(orca).errors.some((error) => /teamKey is required when tracker.linear.via is "orca"/.test(error)));
+  orca.tracker.linear.teamKey = "ENG";
+  assert.deepEqual(validateConfig(orca).errors, []);
   orca.tracker.linear.via = "t3";
   assert.ok(validateConfig(orca).errors.some((error) => /needs runtime "t3"/.test(error)));
+  t3.tracker.linear.via = "orca";
+  assert.ok(validateConfig(t3).errors.some((error) => /needs runtime "orca"/.test(error)));
 });
 
 test("validateAutonomy rejects bad limits, strategies and regexes", () => {
@@ -110,9 +119,13 @@ test("loadSettings merges project files over defaults and reports what it found"
   await assert.rejects(loadSettings(root), /not valid JSON/);
 });
 
-test("init choices default to T3 with the local tracker and validate their values", () => {
-  assert.deepEqual(normalizeInitChoices({}), { runtime: "t3", tracker: "local", linearTeam: null });
-  assert.deepEqual(normalizeInitChoices({ runtime: "orca", tracker: "linear", "linear-team": "ENG" }), { runtime: "orca", tracker: "linear", linearTeam: "ENG" });
+test("init choices detect the runtime, default to the local tracker and validate their values", () => {
+  assert.deepEqual(normalizeInitChoices({}, {}), { runtime: "orca", tracker: "local", linearTeam: null, linearProject: null });
+  assert.equal(normalizeInitChoices({}, { T3_THREAD_ID: "t" }).runtime, "t3");
+  assert.equal(normalizeInitChoices({}, { TERM_PROGRAM: "Orca" }).runtime, "orca");
+  assert.equal(normalizeInitChoices({ runtime: "t3" }, { TERM_PROGRAM: "Orca" }).runtime, "t3");
+  assert.deepEqual(normalizeInitChoices({ runtime: "orca", tracker: "linear", "linear-team": "ENG", "linear-project": "Shop" }, {}), { runtime: "orca", tracker: "linear", linearTeam: "ENG", linearProject: "Shop" });
+  assert.throws(() => normalizeInitChoices({ "linear-project": "x" }, {}), /requires --tracker linear/);
   assert.throws(() => normalizeInitChoices({ runtime: "x" }), /Invalid --runtime/);
   assert.throws(() => normalizeInitChoices({ "linear-team": "ENG" }), /requires --tracker linear/);
 });
@@ -127,6 +140,7 @@ test("generated checks come only from commands that exist", () => {
   assert.equal(config.runtime, "orca");
   assert.equal(config.tracker.kind, "linear");
   assert.equal(config.tracker.linear.teamKey, "ENG");
+  assert.equal(config.tracker.linear.project.name, "demo", "the Linear project defaults to the repository's name");
   assert.equal(config.project.stack, "Node.js");
   assert.deepEqual(validateConfig(config).errors, []);
 });

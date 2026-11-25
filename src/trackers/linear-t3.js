@@ -20,6 +20,7 @@ const DEFAULT_STATE_NAMES = {
 export function linearT3Tracker({ settings }) {
   const names = { ...DEFAULT_STATE_NAMES, ...(settings.stateNames || {}) };
   const labels = settings.labels?.length ? { labels: settings.labels } : {};
+  const project = settings.project?.name ? { project: settings.project.name } : {};
 
   function createOperations(run) {
     const operations = [];
@@ -27,7 +28,7 @@ export function linearT3Tracker({ settings }) {
       operations.push({
         bind: PARENT,
         tool: "create_issue",
-        args: { title: `[${run.id}] ${run.objective || "agent-kit run"}`, body: parentBody(run), ...labels },
+        args: { title: `[${run.id}] ${run.objective || "agent-kit run"}`, body: parentBody(run), ...project, ...labels },
         then: `agent-kit wf tracker-bind ${run.id} ${PARENT} --key <key> --url <url>`,
       });
       return operations;
@@ -38,7 +39,7 @@ export function linearT3Tracker({ settings }) {
       operations.push({
         bind: id,
         tool: "create_issue",
-        args: { title: `[${run.id}] ${task.id} ${task.title}`, body: taskBody(run, task), ...labels },
+        args: { title: `[${run.id}] ${task.id} ${task.title}`, body: taskBody(run, task), ...project, ...labels },
         then: `agent-kit wf tracker-bind ${run.id} ${task.id} --key <key> --url <url>`,
       });
     }

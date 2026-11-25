@@ -50,7 +50,7 @@ exhausted (`escalation.onBudgetExhausted: "coordinator-takeover"`).
 
 | Command | When |
 |---|---|
-| `/configurar-worker` | First session, or to change models, runtime recipe or tracker |
+| `/configurar-worker` | First session, when the session's runtime changed (Orca ↔ T3), or to change models or tracker |
 | `/executar-workflow` | **Full autonomous run** from an objective to a verified, accepted result |
 | `/status-workflow` | Where a run stands |
 | `/retomar-workflow` | Resume after an interruption |
@@ -182,12 +182,17 @@ runtime before anything is redispatched.
 
 - `local`: state only in `.agent-kit/runs/`.
 - `linear`: the plan is mirrored as a parent issue plus one issue per task; each transition updates
-  the issue state and comments the reason. Task state stays owned by `agent-kit wf`, never by a
-  runtime, so one backlog serves T3 and Orca sessions alike.
+  the issue state and comments the reason. Every issue lives in this repository's **own Linear
+  project** (`tracker.linear.project`), isolated from other projects' tasks; never create issues
+  outside it. Task state stays owned by `agent-kit wf`, never by a runtime, so one backlog serves T3
+  and Orca sessions alike.
   - `via: "t3"` (default on T3): through T3's issue tools, no API key — the CLI prints the calls and
     you acknowledge them (runtime guide, "Linear through T3").
+  - `via: "orca"` (default on Orca): through Orca's Linear connection, no API key; real sub-issues,
+    `blocks` relations and automatic sync (runtime guide, "Linear through Orca").
   - `via: "api"`: through Linear's API with a personal key; real sub-issues and `blocks` relations,
-    automatic sync, and runs can start from Linear (`wf new <run> --from-linear <ISSUE-ID>`).
+    automatic sync, the project is created when missing, and runs can start from Linear
+    (`wf new <run> --from-linear <ISSUE-ID>`).
   Tracker failures never stop a run: events stay queued until `agent-kit wf sync <run>` delivers them.
 
 ## 9. Definition of done and final report

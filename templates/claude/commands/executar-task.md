@@ -89,7 +89,7 @@ Termine sua resposta final com **exatamente um** bloco `agent-kit-report` (forma
 os arquivos alterados e cada comando de validação com o exit code real. Se o brief pedir um envio
 específico do runtime (ex.: `worker_done` no Orca), faça-o uma única vez com o mesmo conteúdo.
 
-Depois disso, pare. Não commite, não feche o terminal e não inicie trabalho novo.
+Depois disso, encerre o turno. Não commite e não inicie trabalho novo.
 
 <critical>NÃO PULE NENHUM PASSO</critical>
 

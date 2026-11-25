@@ -28,7 +28,7 @@ async function freshDir(prefix) {
 }
 
 async function installInto(dir, mode, resolveConflict = async () => "skip", runtime = "t3") {
-  const files = await planFiles(TEMPLATES_DIR, { runtime });
+  const files = await planFiles(TEMPLATES_DIR);
   return installFiles({
     files,
     targetDir: dir,
@@ -110,7 +110,7 @@ test("keep-both preserves the original and writes a .new sibling", async () => {
 
 test("dry run writes nothing to disk", async () => {
   const dir = await freshDir("agent-kit-dry-");
-  const files = await planFiles(TEMPLATES_DIR, { runtime: "t3" });
+  const files = await planFiles(TEMPLATES_DIR);
   await installFiles({
     files,
     targetDir: dir,
@@ -138,28 +138,28 @@ test("CLAUDE.md imports AGENTS.md and the selected runtime guide, and starts wit
   assert.match(claudeMd, /^@AGENTS\.md\r?\n@\.agent-kit\/runtime\/t3\.md\r?\n/);
   assert.match(claudeMd, /<!--WORKER-SETUP-->[\s\S]*\/configurar-worker[\s\S]*<!--\/WORKER-SETUP-->/);
   assert.ok(existsSync(join(dir, ".agent-kit", "runtime", "t3.md")));
-  assert.ok(!existsSync(join(dir, ".agent-kit", "runtime", "orca.md")));
+  assert.ok(existsSync(join(dir, ".agent-kit", "runtime", "orca.md")), "both guides ship so the runtime can follow the session");
 });
 
-test("the orca runtime installs only the orca guide, with the worker recipe placeholder", async () => {
+test("the orca runtime imports the orca guide, which uses worker-start and forbids polling", async () => {
   const dir = await freshDir("agent-kit-orca-");
   await installInto(dir, "greenfield", async () => "skip", "orca");
   const claudeMd = await readFile(join(dir, "CLAUDE.md"), "utf8");
-  assert.match(claudeMd, /@\.agent-kit\/runtime\/orca\.md/);
-  assert.ok(!existsSync(join(dir, ".agent-kit", "runtime", "t3.md")));
+  assert.match(claudeMd, /^@AGENTS\.md\r?\n@\.agent-kit\/runtime\/orca\.md\r?\n/);
   const guide = await readFile(join(dir, ".agent-kit", "runtime", "orca.md"), "utf8");
-  assert.match(guide, /<!--WORKER-RECIPE-->\r?\n\*\*Not configured\.\*\*/);
-  const configure = await readFile(join(dir, ".claude", "commands", "configurar-worker.md"), "utf8");
-  assert.match(configure, /Perguntar \(Orca\)/);
-  assert.doesNotMatch(configure, /orchestrator_capabilities/);
+  assert.match(guide, /worker-start --environment local --spec-file/);
+  assert.match(guide, /poll `orca orchestration check`/);
+  assert.doesNotMatch(guide, /launchCommand|--inject|Monitor/);
 });
 
-test("configurar-worker keeps only the selected runtime's section", async () => {
-  const dir = await freshDir("agent-kit-t3cfg-");
+test("configurar-worker covers both runtimes and lets the session decide", async () => {
+  const dir = await freshDir("agent-kit-cfg-");
   await installInto(dir, "greenfield");
   const configure = await readFile(join(dir, ".claude", "commands", "configurar-worker.md"), "utf8");
+  assert.match(configure, /agent-kit runtime detect/);
   assert.match(configure, /orchestrator_capabilities/);
-  assert.doesNotMatch(configure, /Perguntar \(Orca\)/);
+  assert.match(configure, /orca orchestration worker-start/);
+  assert.match(configure, /tracker\.linear\.project\.name/);
   assert.doesNotMatch(configure, /<!--IF:/);
 });
 

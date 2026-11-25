@@ -15,7 +15,7 @@ const STATES = [
   { id: "s-canceled", name: "Canceled", type: "canceled" },
 ];
 
-function fakeLinear({ parent } = {}) {
+function fakeLinear({ parent, projects = [] } = {}) {
   const calls = [];
   let counter = 0;
   const fetchImpl = async (url, init) => {
@@ -34,6 +34,8 @@ function fakeLinear({ parent } = {}) {
       Relate: { issueRelationCreate: { success: true } },
       Comment: { commentCreate: { success: true } },
       Parent: { issue: parent },
+      Project: { projects: { nodes: projects } },
+      CreateProject: { projectCreate: { success: true, project: { id: "proj-new", name: "demo", url: "https://linear.app/x/project/demo" } } },
     }[op];
     return { ok: true, status: 200, json: async () => ({ data: typeof data === "function" ? data() : data }) };
   };
@@ -41,7 +43,8 @@ function fakeLinear({ parent } = {}) {
 }
 
 function settings(overrides = {}) {
-  return { ...defaultConfig().tracker.linear, via: "api", teamKey: "ENG", ...overrides };
+  const base = defaultConfig().tracker.linear;
+  return { ...base, via: "api", teamKey: "ENG", project: { ...base.project, name: "demo" }, ...overrides };
 }
 
 function makeRun() {
@@ -88,9 +91,33 @@ test("publishing a plan creates a parent, one sub-issue per task and blocks rela
   const relation = calls.find((call) => call.op === "Relate").variables.input;
   assert.deepEqual(relation, { issueId: "uuid-2", relatedIssueId: "uuid-3", type: "blocks" });
   assert.equal(run.tasks["2.0"].tracker.identifier, "ENG-3");
+  assert.ok(creates.every((input) => input.projectId === "proj-new"), "every issue lands in the repository's project");
+  assert.deepEqual(calls.find((call) => call.op === "CreateProject").variables.input.teamIds, ["team-1"]);
+  assert.equal(run.tracker.project.id, "proj-new");
 
   const again = await tracker.publishPlan(run);
   assert.deepEqual(again.created, []);
+});
+
+test("an existing project of the same team is reused, another team's namesake is not", async () => {
+  const projects = [
+    { id: "proj-other", name: "demo", url: "u", teams: { nodes: [{ key: "OPS" }] } },
+    { id: "proj-eng", name: "demo", url: "u", teams: { nodes: [{ key: "ENG" }] } },
+  ];
+  const { calls, fetchImpl } = fakeLinear({ projects });
+  const tracker = linearTracker({ settings: settings(), gql: createLinearClient({ apiKey: "k", fetchImpl }) });
+  await tracker.publishPlan(makeRun());
+  assert.ok(!calls.some((call) => call.op === "CreateProject"));
+  assert.ok(calls.filter((call) => call.op === "Create").every((call) => call.variables.input.projectId === "proj-eng"));
+});
+
+test("a configured project id is used without a lookup, and a missing project name is refused", async () => {
+  const { calls, fetchImpl } = fakeLinear();
+  const gql = createLinearClient({ apiKey: "k", fetchImpl });
+  await linearTracker({ settings: settings({ project: { name: "demo", id: "proj-fixed" } }), gql }).publishPlan(makeRun());
+  assert.ok(!calls.some((call) => call.op === "Project"));
+  assert.ok(calls.filter((call) => call.op === "Create").every((call) => call.variables.input.projectId === "proj-fixed"));
+  await assert.rejects(linearTracker({ settings: settings({ project: { name: null, id: null } }), gql }).publishPlan(makeRun()), /project.name is not set/);
 });
 
 test("sync moves issues through mapped states and comments every transition", async () => {

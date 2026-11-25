@@ -2,17 +2,20 @@ import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { RUNTIMES, TRACKERS, defaultAutonomy, defaultConfig, defaultWorkflow } from "./core/config.js";
+import { detectRuntime } from "./runtimes/detect.js";
 
 const POLICY_SOURCE = fileURLToPath(new URL("./core/policy.js", import.meta.url));
 const UNKNOWN = "TBD";
 
-export function normalizeInitChoices(flags = {}) {
-  const runtime = flags.runtime || "t3";
+export function normalizeInitChoices(flags = {}, env = process.env) {
+  const runtime = flags.runtime || detectRuntime(env).runtime;
   const tracker = flags.tracker || "local";
   if (!RUNTIMES.includes(runtime)) throw new Error(`Invalid --runtime: ${runtime}. Use ${RUNTIMES.join(" or ")}.`);
   if (!TRACKERS.includes(tracker)) throw new Error(`Invalid --tracker: ${tracker}. Use ${TRACKERS.join(" or ")}.`);
-  if (flags["linear-team"] && tracker !== "linear") throw new Error("--linear-team requires --tracker linear");
-  return { runtime, tracker, linearTeam: flags["linear-team"] || null };
+  for (const flag of ["linear-team", "linear-project"]) {
+    if (flags[flag] && tracker !== "linear") throw new Error(`--${flag} requires --tracker linear`);
+  }
+  return { runtime, tracker, linearTeam: flags["linear-team"] || null, linearProject: flags["linear-project"] || null };
 }
 
 export function checksFromCommands(commands = {}) {
@@ -37,6 +40,7 @@ export function buildConfig({ detected, answers, choices }) {
   };
   config.tracker.kind = choices.tracker;
   if (choices.linearTeam) config.tracker.linear.teamKey = choices.linearTeam;
+  if (choices.tracker === "linear") config.tracker.linear.project.name = choices.linearProject || answers.name;
   return config;
 }
 
