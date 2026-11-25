@@ -7,7 +7,7 @@ agent-kit has two halves:
 - **The `agent-kit` CLI** (this package): deterministic state, scheduling, briefs, verification and
   policy. The coordinator calls it; it never calls an LLM.
 
-The runtime tools (T3's `delegate_task`, Orca's terminals) are only reachable by the coordinator
+The runtime tools (T3's `delegate_task`, Orca's `worker-start`) are only reachable by the coordinator
 session, not by a Node process. So the CLI computes *what to call* and records *what happened*; the
 coordinator makes the call. That keeps the package dependency-free, testable without a live
 session, and honest about what it controls.
